@@ -1,0 +1,55 @@
+import 'package:isar/isar.dart';
+import 'custom_outline.dart';
+import 'outline_group.dart';
+import 'character.dart';
+import 'character_group.dart';
+import 'outline_tab.dart';
+import 'outline_node.dart';
+// 【关键修复】必须显式引入这个文件，Book 才能识别到深层嵌套的 CharacterEventSchema
+import 'character_event.dart';
+
+part 'book.g.dart';
+
+@collection
+class Book {
+  Id id = Isar.autoIncrement;
+
+  late String title;
+  String? coverPath;
+  String? description; // 核心梗概 (Logline)
+
+  // 作者/笔名
+  String? authorName;
+
+  // 状态：0=连载中, 1=已完结
+  int status = 0;
+
+  late DateTime createdAt;
+  late DateTime updatedAt;
+
+  int wordCount = 0;
+  bool isDeleted = false;
+  int? lastChapterId;
+
+  // --- 大纲模块 ---
+
+  String? outline; // 核心总纲
+  String? volumeOutline; // (暂留，未来可能合并)
+
+  // 主线剧情 (对应 "剧情·细纲" Tab)
+  List<CustomOutline>? customOutlines;
+
+  // (旧) 大纲分组 - 留着兼容防止报错，后续清理
+  List<OutlineGroup>? outlineGroups;
+
+  // 自定义设定集 (对应 "宏观·设定" 下的自定义 Tabs)
+  List<OutlineTab>? settingsTabs;
+
+  // --- 角色管理模块 ---
+
+  /// 根目录下的角色
+  List<Character>? characters;
+
+  /// 角色分组
+  List<CharacterGroup>? characterGroups;
+}

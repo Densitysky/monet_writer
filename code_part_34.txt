@@ -1,0 +1,559 @@
+
+
+========================================
+FILE: lib\pages\writing\components\right_drawer_views\root_view.dart
+========================================
+
+import 'package:flutter/material.dart';
+
+class RootView extends StatelessWidget {
+  final Function(String key, String title) onNavigate;
+
+  const RootView({super.key, required this.onNavigate});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildItem(
+          context,
+          icon: Icons.account_circle_outlined,
+          title: '角色卡片',
+          onTap: () => onNavigate('character', '角色卡片'),
+        ),
+        _buildItem(
+          context,
+          icon: Icons.auto_stories_outlined,
+          title: '大纲梳理',
+          onTap: () => onNavigate('outline', '大纲梳理'),
+        ),
+        _buildItem(
+          context,
+          icon: Icons.format_size,
+          title: '排版设置',
+          onTap: () => onNavigate('settings', '排版设置'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItem(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: theme.colorScheme.primary),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+
+========================================
+FILE: lib\pages\writing\components\right_drawer_views\settings_view.dart
+========================================
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:monet_writer/providers/user_provider.dart';
+
+class SettingsView extends StatelessWidget {
+  const SettingsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final settings = context.watch<UserProvider>();
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      children: [
+        // 1. 主题选择
+        Text('阅读主题', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 50,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: List.generate(UserProvider.themes.length, (index) {
+              final item = UserProvider.themes[index];
+              final isSelected = settings.themeIndex == index;
+              return GestureDetector(
+                onTap: () => settings.updateTheme(index),
+                child: Container(
+                  width: 50,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: item.backgroundColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? theme.colorScheme.primary : Colors.black12,
+                      width: isSelected ? 3 : 1,
+                    ),
+                    boxShadow: [
+                      if (isSelected)
+                        BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 8),
+                    ],
+                  ),
+                  child: isSelected
+                      ? Icon(Icons.check, color: item.textColor, size: 20)
+                      : null,
+                ),
+              );
+            }),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        const Divider(),
+
+        // 2. 个性化背景设置
+        Text('个性化', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('背景毛玻璃效果'),
+          subtitle: const Text('让文字在背景上更清晰'),
+          value: settings.isBackgroundBlurred,
+          onChanged: (val) => settings.toggleBackgroundBlur(val),
+        ),
+        // 【新增开关】控制是否使用头像
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('使用头像作为背景'),
+          subtitle: const Text('若未单独设置背景图，则使用头像'),
+          value: settings.useAvatarAsBackground,
+          onChanged: (val) => settings.toggleUseAvatarAsBackground(val),
+        ),
+
+        const Divider(),
+
+        // 3. 字体设置
+        Text('字体设置', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '当前字体：${settings.fontFamily == "CustomFont" ? "自定义" : "系统默认"}',
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+            if (settings.fontFamily == "CustomFont")
+              TextButton(
+                onPressed: settings.resetFont,
+                child: const Text('重置'),
+              ),
+            FilledButton.tonal(
+              onPressed: settings.loadLocalFont,
+              child: const Text('导入字体'),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+        Text('字号: ${settings.fontSize.toInt()}', style: theme.textTheme.bodyMedium),
+        Slider(
+          value: settings.fontSize,
+          min: 12,
+          max: 30,
+          divisions: 18,
+          label: settings.fontSize.toInt().toString(),
+          onChanged: (v) => settings.updateWritingConfig(fontSize: v),
+        ),
+
+        Text('行高: ${settings.lineHeight.toStringAsFixed(1)}', style: theme.textTheme.bodyMedium),
+        Slider(
+          value: settings.lineHeight,
+          min: 1.0,
+          max: 3.0,
+          divisions: 20,
+          label: settings.lineHeight.toStringAsFixed(1),
+          onChanged: (v) => settings.updateWritingConfig(lineHeight: v),
+        ),
+      ],
+    );
+  }
+}
+
+
+========================================
+FILE: lib\pages\writing\components\writing_drawer.dart
+========================================
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:isar/isar.dart';
+import 'package:monet_writer/models/chapter.dart';
+import 'package:monet_writer/services/database_service.dart';
+import 'package:monet_writer/providers/writing_provider.dart';
+
+class WritingDrawer extends StatelessWidget {
+  const WritingDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final provider = context.watch<WritingProvider>();
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.75,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        margin: EdgeInsets.only(
+          top: topPadding + 10,
+          bottom: 40,
+          left: 10,
+          right: 0,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(5, 5),
+            ),
+          ],
+        ),
+        child: FutureBuilder<List<Chapter>>(
+          future: DatabaseService().isar.chapters
+              .filter()
+              .bookIdEqualTo(provider.book.id)
+              .sortByOrderIndex()
+              .findAll(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+            final chapters = snapshot.data!;
+
+            return Column(
+              children: [
+                // 头部
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: theme.colorScheme.primary,
+                        child: Text(
+                          provider.book.title.isNotEmpty ? provider.book.title[0] : '无',
+                          style: TextStyle(color: theme.colorScheme.onPrimary),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(provider.book.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('共 ${chapters.length} 章', style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 列表
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: chapters.length,
+                    itemBuilder: (ctx, index) {
+                      final chapter = chapters[index];
+                      final isSelected = provider.currentChapter?.id == chapter.id;
+
+                      return ListTile(
+                        selected: isSelected,
+                        selectedTileColor: theme.colorScheme.primaryContainer,
+                        title: Text(chapter.title, style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? theme.colorScheme.primary : null,
+                        )),
+                        subtitle: Text('${chapter.wordCount} 字', style: const TextStyle(fontSize: 10)),
+                        onTap: () {
+                          provider.selectChapter(chapter);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                // 底部按钮
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: FilledButton.icon(
+                    onPressed: () => _showCreateDialog(context, provider),
+                    icon: const Icon(Icons.add),
+                    label: const Text('新建章节'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showCreateDialog(BuildContext context, WritingProvider provider) async {
+    final count = await DatabaseService().isar.chapters.filter().bookIdEqualTo(provider.book.id).count();
+    final defaultTitle = '第${count + 1}章';
+    final controller = TextEditingController(text: defaultTitle);
+
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('新建章节'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: '章节标题'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              if (controller.text.isNotEmpty) {
+                Navigator.pop(context);
+                provider.createChapter(controller.text);
+              }
+            },
+            child: const Text('创建'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+========================================
+FILE: lib\pages\writing\outline_page.dart
+========================================
+
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
+import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/chapter.dart';
+import 'package:monet_writer/models/custom_outline.dart'; // 引入自定义大纲模型
+import 'package:monet_writer/services/database_service.dart';
+
+class OutlinePage extends StatefulWidget {
+  final Book book;
+  final Chapter? currentChapter;
+  final int initialTabIndex; // 0:全书, 1:分卷, 2:本章, 3+:自定义
+
+  const OutlinePage({
+    super.key,
+    required this.book,
+    this.currentChapter,
+    this.initialTabIndex = 0,
+  });
+
+  @override
+  State<OutlinePage> createState() => _OutlinePageState();
+}
+
+class _OutlinePageState extends State<OutlinePage> with TickerProviderStateMixin { // 改为 TickerProviderStateMixin 以支持动态 Tab
+  TabController? _tabController;
+  final Isar _isar = DatabaseService().isar;
+
+  // --- 固定控制器 ---
+  final TextEditingController _bookOutlineCtrl = TextEditingController();
+  final TextEditingController _volumeOutlineCtrl = TextEditingController();
+  final TextEditingController _chapterOutlineCtrl = TextEditingController();
+
+  // --- 动态控制器 ---
+  final List<TextEditingController> _customControllers = [];
+
+  // 防抖 Timer
+  Timer? _debounceTimer;
+  bool _isDirty = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initData();
+  }
+
+  void _initData() {
+    final customOutlines = widget.book.customOutlines ?? [];
+
+    // 1. 初始化控制器数据
+    _bookOutlineCtrl.text = widget.book.outline ?? '';
+    _volumeOutlineCtrl.text = widget.book.volumeOutline ?? '';
+    if (widget.currentChapter != null) {
+      _chapterOutlineCtrl.text = widget.currentChapter!.outline ?? '';
+    }
+
+    // 2. 初始化自定义大纲控制器
+    for (var outline in customOutlines) {
+      _customControllers.add(TextEditingController(text: outline.content ?? ''));
+    }
+
+    // 3. 初始化 TabController
+    // 长度 = 3个固定 (全书/分卷/本章) + 自定义数量
+    _tabController = TabController(
+      length: 3 + customOutlines.length,
+      vsync: this,
+      initialIndex: widget.initialTabIndex < (3 + customOutlines.length) ? widget.initialTabIndex : 0,
+    );
+  }
+
+  @override
+  void dispose() {
+    _saveData(); // 退出前强制保存
+    _debounceTimer?.cancel();
+    _tabController?.dispose();
+    _bookOutlineCtrl.dispose();
+    _volumeOutlineCtrl.dispose();
+    _chapterOutlineCtrl.dispose();
+    for (var ctrl in _customControllers) {
+      ctrl.dispose();
+    }
+    super.dispose();
+  }
+
+  /// 保存逻辑
+  Future<void> _saveData() async {
+    if (!_isDirty) return;
+
+    final bookOutline = _bookOutlineCtrl.text;
+    final volumeOutline = _volumeOutlineCtrl.text;
+    final chapterOutline = _chapterOutlineCtrl.text;
+
+    await _isar.writeTxn(() async {
+      // 1. 保存书的大纲 (固定 + 自定义)
+      final freshBook = await _isar.books.get(widget.book.id);
+      if (freshBook != null) {
+        freshBook.outline = bookOutline;
+        freshBook.volumeOutline = volumeOutline;
+
+        // 保存自定义大纲内容
+        if (freshBook.customOutlines != null) {
+          // 这里使用 List.generate 重新构建列表，确保 Isar 能检测到变更
+          // 注意：MVP 版本假设列表顺序未变。更严谨的做法是对比 ID。
+          List<CustomOutline> updates = freshBook.customOutlines!.toList();
+          for (int i = 0; i < updates.length && i < _customControllers.length; i++) {
+            updates[i].content = _customControllers[i].text;
+          }
+          freshBook.customOutlines = updates;
+        }
+
+        await _isar.books.put(freshBook);
+      }
+
+      // 2. 保存章节细纲
+      if (widget.currentChapter != null) {
+        final freshChapter = await _isar.chapters.get(widget.currentChapter!.id);
+        if (freshChapter != null) {
+          freshChapter.outline = chapterOutline;
+          await _isar.chapters.put(freshChapter);
+        }
+      }
+    });
+
+    if (mounted) setState(() => _isDirty = false);
+  }
+
+  void _onTextChanged() {
+    if (!_isDirty) setState(() => _isDirty = true);
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(seconds: 1), _saveData);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final customOutlines = widget.book.customOutlines ?? [];
+
+    // 动态构建 Tabs
+    List<Tab> tabs = [
+      const Tab(text: '全书大纲'),
+      const Tab(text: '分卷大纲'),
+      const Tab(text: '本章细纲'),
+      ...customOutlines.map((e) => Tab(text: e.title ?? '自定义')),
+    ];
+
+    // 动态构建 Views
+    List<Widget> views = [
+      _buildEditor(_bookOutlineCtrl, '记录本书的主线剧情、核心设定...'),
+      _buildEditor(_volumeOutlineCtrl, '记录当前卷的冲突、高潮点...'),
+      widget.currentChapter == null
+          ? const Center(child: Text('请先选择一个章节'))
+          : _buildEditor(_chapterOutlineCtrl, '记录本章的剧情细纲，方便写作对照...'),
+      ..._customControllers.map((ctrl) => _buildEditor(ctrl, '在此编辑自定义大纲内容...')),
+    ];
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surfaceContainerLow,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('大纲梳理', style: TextStyle(fontSize: 16)),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true, // 【关键】允许横向滚动，防止 Tab 太多挤在一起
+          tabAlignment: TabAlignment.start, // 靠左对齐
+          tabs: tabs,
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: _isDirty
+                  ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.check, size: 16, color: Colors.green),
+            ),
+          )
+        ],
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: views,
+      ),
+    );
+  }
+
+  Widget _buildEditor(TextEditingController controller, String hint) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: TextField(
+        controller: controller,
+        maxLines: null,
+        expands: true,
+        textAlignVertical: TextAlignVertical.top,
+        style: const TextStyle(fontSize: 16, height: 1.6),
+        decoration: InputDecoration(
+          hintText: hint,
+          border: InputBorder.none,
+        ),
+        onChanged: (_) => _onTextChanged(),
+      ),
+    );
+  }
+}

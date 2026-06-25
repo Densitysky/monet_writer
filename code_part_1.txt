@@ -1,0 +1,50 @@
+
+
+========================================
+FILE: lib\data\schema.dart
+========================================
+
+import 'package:isar/isar.dart';
+
+// 这一行目前会报错，稍后运行生成命令会自动解决
+part 'schema.g.dart';
+
+/// 书籍模型
+@collection
+class Book {
+  Id id = Isar.autoIncrement; // 自增 ID
+
+  @Index(type: IndexType.value)
+  late String title; // 书名
+
+  String? author;    // 作者名
+  String? desc;      // 简介
+
+  // 封面主色调 (Hex 字符串，如 "FF0000")
+  // 用于在列表页显示漂亮的纯色背景
+  String? coverColor;
+
+  late DateTime createTime; // 创建时间
+  late DateTime updateTime; // 更新时间 (用于排序)
+
+  int totalWordCount = 0;   // 总字数 (缓存字段，避免每次遍历章节计算)
+
+  bool isFinished = false;  // 状态: false=连载中, true=已完结
+
+  // 关联：一本书包含多个章节
+  final chapters = IsarLinks<Chapter>();
+}
+
+/// 章节模型
+@collection
+class Chapter {
+  Id id = Isar.autoIncrement;
+
+  late String title;   // 章节标题
+  late String content; // 正文内容
+
+  int wordCount = 0;   // 单章字数
+
+  late DateTime createTime;
+  late DateTime updateTime;
+}

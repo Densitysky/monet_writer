@@ -1,0 +1,594 @@
+
+
+========================================
+FILE: lib\pages\writing\writing_page.dart
+========================================
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+
+import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/providers/user_provider.dart';
+import 'package:monet_writer/providers/writing_provider.dart';
+
+import 'package:monet_writer/pages/writing/components/writing_drawer.dart';
+import 'package:monet_writer/pages/writing/components/keyboard_toolbar.dart';
+import 'package:monet_writer/pages/writing/components/right_drawer.dart';
+import 'package:monet_writer/pages/editor/ai_assistant_sheet.dart';
+import 'package:monet_writer/pages/writing/components/monet_selection_controls.dart';
+import 'package:monet_writer/pages/writing/components/ai_input_toolbar.dart';
+
+class WritingPage extends StatelessWidget {
+  final Book book;
+  final int initialChapterIndex;
+
+  const WritingPage({
+    super.key,
+    required this.book,
+    this.initialChapterIndex = -1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => WritingProvider(book: book),
+      child: _WritingPageContent(initialChapterIndex: initialChapterIndex),
+    );
+  }
+}
+
+class _WritingPageContent extends StatefulWidget {
+  final int initialChapterIndex;
+  const _WritingPageContent({required this.initialChapterIndex});
+
+  @override
+  State<_WritingPageContent> createState() => _WritingPageContentState();
+}
+
+class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBindingObserver {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _hasInitialized = false;
+  bool _isKeyboardVisible = false;
+
+  // 控制是否显示底部 AI 输入栏
+  bool _showAiInput = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    final bottomInset = View.of(context).viewInsets.bottom;
+    final newValue = bottomInset > 0.0;
+    if (newValue != _isKeyboardVisible) {
+      setState(() {
+        _isKeyboardVisible = newValue;
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasInitialized) {
+      if (widget.initialChapterIndex >= 0) {
+        final provider = context.read<WritingProvider>();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          provider.loadChapterByIndex(widget.initialChapterIndex);
+        });
+      }
+      _hasInitialized = true;
+    }
+  }
+
+  Future<void> _pickImage(WritingProvider provider) async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}${p.extension(image.path)}';
+      final savedImage = await File(image.path).copy('${appDir.path}/$fileName');
+
+      provider.insertText('\n![image](${savedImage.path})\n');
+    }
+  }
+
+  // 这个 Sheet 方法可能已经不常用了，但保留作为备选入口
+  void _openAiAssistant(WritingProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AiAssistantSheet(
+        contextSummary: provider.contentController.text,
+        onResult: (resultText) {
+          provider.insertText(resultText);
+        },
+      ),
+    );
+  }
+
+  // 回调：当点击悬浮菜单的 AI 按钮时触发
+  void _onAiModeTriggered() {
+    setState(() {
+      _showAiInput = true;
+    });
+  }
+
+  // 回调：关闭 AI 输入栏
+  void _closeAiInput() {
+    setState(() {
+      _showAiInput = false;
+    });
+    // 关闭时清除高亮（如果是手动取消的）
+    context.read<WritingProvider>().clearAiHighlight();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final userProvider = context.watch<UserProvider>();
+    final provider = context.watch<WritingProvider>();
+
+    // 创建 Controls，传入回调
+    final selectionControls = MonetSelectionControls(
+      provider: provider,
+      onAiInputTriggered: _onAiModeTriggered,
+    );
+
+    final wordCount = provider.contentController.text.length;
+
+    BoxDecoration? bgDecoration;
+    if (userProvider.backgroundImagePath != null) {
+      final file = File(userProvider.backgroundImagePath!);
+      if (file.existsSync()) {
+        bgDecoration = BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(file),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.2),
+                BlendMode.darken
+            ),
+          ),
+        );
+      }
+    }
+
+    final backgroundColor = userProvider.currentTheme.backgroundColor;
+    final headerTextColor = userProvider.currentTheme.textColor.withOpacity(0.7);
+
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: backgroundColor,
+      drawer: const WritingDrawer(),
+      endDrawer: const RightDrawer(),
+      drawerEnableOpenDragGesture: false,
+      endDrawerEnableOpenDragGesture: false,
+      resizeToAvoidBottomInset: true,
+
+      body: Container(
+        decoration: bgDecoration ?? BoxDecoration(color: backgroundColor),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Container(
+                height: 50,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                color: Colors.transparent,
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back_ios_new, size: 20, color: headerTextColor),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: TextField(
+                          controller: provider.titleController,
+                          textAlign: TextAlign.center,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: '无标题',
+                            isDense: true,
+                          ),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: userProvider.currentTheme.textColor,
+                          ),
+                          onChanged: (_) => provider.onTextChanged(),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: Text(
+                        '$wordCount字',
+                        style: TextStyle(fontSize: 12, color: headerTextColor),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: TextField(
+                        controller: provider.contentController,
+                        // 【关键】绑定 ScrollController
+                        scrollController: provider.scrollController,
+                        maxLines: null,
+                        expands: true,
+                        selectionControls: selectionControls,
+                        decoration: const InputDecoration(border: InputBorder.none, hintText: '开始创作...'),
+                        style: TextStyle(
+                          fontSize: userProvider.fontSize,
+                          height: userProvider.lineHeight,
+                          fontFamily: userProvider.fontFamily,
+                          color: userProvider.currentTheme.textColor,
+                        ),
+                        cursorColor: userProvider.currentTheme.cursorColor,
+                        onChanged: (_) => provider.onContentChanged(),
+                        // 当点击空白处时，清除可能存在的高亮
+                        onTapOutside: (_) => provider.clearAiHighlight(),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0, top: 0, bottom: 0, width: 40,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onDoubleTap: () => _scaffoldKey.currentState?.openDrawer(),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0, top: 0, bottom: 0, width: 40,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onDoubleTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 底部栏切换逻辑
+              if (_showAiInput)
+                AiInputToolbar(onClose: _closeAiInput)
+              else if (_isKeyboardVisible)
+                KeyboardToolbar(
+                  onInsertImage: () => _pickImage(provider),
+                  // onOpenAI 移除
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+========================================
+FILE: lib\providers\theme_provider.dart
+========================================
+
+import 'package:flutter/material.dart';
+
+/// 主题状态管理
+/// 负责控制 App 的全局颜色种子和深色模式
+class ThemeProvider extends ChangeNotifier {
+  // 默认种子颜色 (靛青色)
+  Color _seedColor = Colors.indigo;
+
+  // 默认外观模式 (跟随系统)
+  ThemeMode _themeMode = ThemeMode.system;
+
+  Color get seedColor => _seedColor;
+  ThemeMode get themeMode => _themeMode;
+
+  /// 切换主题种子颜色
+  void setSeedColor(Color color) {
+    _seedColor = color;
+    notifyListeners(); // 通知 UI 刷新
+  }
+
+  /// 切换外观模式 (浅色/深色/系统)
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    notifyListeners();
+  }
+}
+
+
+========================================
+FILE: lib\providers\user_provider.dart
+========================================
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:palette_generator/palette_generator.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:monet_writer/services/database_service.dart';
+
+class WritingTheme {
+  final String name;
+  final Color backgroundColor;
+  final Color textColor;
+  final Color cursorColor;
+  final Color outlineColor;
+
+  const WritingTheme(this.name, this.backgroundColor, this.textColor, {this.cursorColor = Colors.blue, this.outlineColor = Colors.grey});
+}
+
+class UserProvider extends ChangeNotifier {
+  // --- 核心数据 ---
+  String _nickname = "莫纳书友";
+  String? _avatarPath;
+  String? _backgroundPath; // 自定义背景图
+
+  // --- 开关 ---
+  bool _useAvatarAsBackground = false;
+
+  // --- 统计数据 ---
+  int _totalWords = 0;
+  int _todayWords = 0;
+  int _consecutiveDays = 0;
+
+  // --- 外观设置 ---
+  bool _isBackgroundBlurred = true;
+  double _fontSize = 18.0;
+  double _lineHeight = 1.8;
+  String _fontFamily = 'System';
+  String? _customFontPath;
+  int _themeIndex = 0;
+
+  // 预设主题
+  static const List<WritingTheme> themes = [
+    WritingTheme('默认白', Color(0xFFFAFAFA), Colors.black87),
+    WritingTheme('护眼绿', Color(0xFFE8F5E9), Color(0xFF2E7D32)),
+    WritingTheme('羊皮纸', Color(0xFFFDF5E6), Color(0xFF5D4037)),
+    WritingTheme('暗夜黑', Color(0xFF1E1E1E), Color(0xFFB0BEC5), cursorColor: Colors.white, outlineColor: Colors.grey),
+    WritingTheme('深海蓝', Color(0xFF102027), Color(0xFFCFD8DC), cursorColor: Colors.cyan),
+  ];
+
+  // --- Getters ---
+  String get nickname => _nickname;
+  String? get avatarPath => _avatarPath;
+  bool get useAvatarAsBackground => _useAvatarAsBackground;
+
+  // 兼容 ProfilePage
+  String? get backgroundPath => _backgroundPath;
+
+  // 写作页使用的背景图逻辑
+  String? get backgroundImagePath {
+    // 1. 如果开启了开关且有头像，优先用头像
+    if (_useAvatarAsBackground && _avatarPath != null && File(_avatarPath!).existsSync()) {
+      return _avatarPath;
+    }
+    // 2. 如果有专门设置的背景图，用背景图
+    if (_backgroundPath != null && File(_backgroundPath!).existsSync()) {
+      return _backgroundPath;
+    }
+    // 3. 否则为空（纯色）
+    return null;
+  }
+
+  int get totalWords => _totalWords;
+  int get todayWords => _todayWords;
+  int get consecutiveDays => _consecutiveDays;
+  bool get isBackgroundBlurred => _isBackgroundBlurred;
+  double get fontSize => _fontSize;
+  double get lineHeight => _lineHeight;
+  String get fontFamily => _fontFamily;
+  int get themeIndex => _themeIndex;
+  WritingTheme get currentTheme => themes[_themeIndex];
+
+  PaletteGenerator? _paletteGenerator;
+  Color get primaryColor => _paletteGenerator?.dominantColor?.color ?? Colors.blue;
+
+  // --- 初始化 ---
+  Future<void> loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    _nickname = prefs.getString('user_nickname') ?? "莫纳书友";
+    _avatarPath = prefs.getString('user_avatar_path');
+    _backgroundPath = prefs.getString('user_bg_path');
+    _useAvatarAsBackground = prefs.getBool('setting_use_avatar_bg') ?? false;
+
+    // 【核心修复】清理逻辑：如果背景路径跟头像路径一样，说明是旧版本残留，强制清除
+    if (_backgroundPath == _avatarPath) {
+      _backgroundPath = null;
+    }
+
+    await refreshStats();
+
+    _isBackgroundBlurred = prefs.getBool('setting_bg_blur') ?? true;
+    _fontSize = prefs.getDouble('setting_font_size') ?? 18.0;
+    _lineHeight = prefs.getDouble('setting_line_height') ?? 1.8;
+    _fontFamily = prefs.getString('setting_font_family') ?? 'System';
+    _customFontPath = prefs.getString('setting_font_path');
+    _themeIndex = prefs.getInt('setting_theme_index') ?? 0;
+
+    if (_customFontPath != null && File(_customFontPath!).existsSync()) {
+      await _loadFontToEngine(_customFontPath!);
+    }
+
+    if (_avatarPath != null) {
+      await _updatePalette();
+    }
+    notifyListeners();
+  }
+
+  Future<void> refreshStats() async {
+    final db = DatabaseService();
+    _todayWords = await db.getTodayWordCount();
+    _totalWords = await db.getTotalWordCount();
+    _consecutiveDays = await db.getConsecutiveDays();
+    notifyListeners();
+  }
+
+  // --- Setters ---
+
+  Future<void> toggleUseAvatarAsBackground(bool val) async {
+    _useAvatarAsBackground = val;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('setting_use_avatar_bg', val);
+    notifyListeners();
+  }
+
+  Future<void> updateNickname(String name) async {
+    _nickname = name;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_nickname', name);
+    notifyListeners();
+  }
+  Future<void> setNickname(String name) => updateNickname(name);
+
+  Future<void> updateWritingConfig({double? fontSize, double? lineHeight}) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (fontSize != null) {
+      _fontSize = fontSize;
+      await prefs.setDouble('setting_font_size', fontSize);
+    }
+    if (lineHeight != null) {
+      _lineHeight = lineHeight;
+      await prefs.setDouble('setting_line_height', lineHeight);
+    }
+    notifyListeners();
+  }
+  Future<void> setFontSize(double size) => updateWritingConfig(fontSize: size);
+  Future<void> setLineHeight(double height) => updateWritingConfig(lineHeight: height);
+
+  Future<void> setFontFamily(String font) async {
+    _fontFamily = font;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('setting_font_family', font);
+    notifyListeners();
+  }
+
+  Future<void> resetFont() async {
+    await setFontFamily('System');
+    _customFontPath = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('setting_font_path');
+    notifyListeners();
+  }
+
+  Future<void> loadLocalFont() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['ttf', 'otf'],
+      );
+
+      if (result != null) {
+        File file = File(result.files.single.path!);
+        final directory = await getApplicationDocumentsDirectory();
+        final savedFile = await file.copy('${directory.path}/custom_font${p.extension(file.path)}');
+
+        _customFontPath = savedFile.path;
+        await _loadFontToEngine(_customFontPath!);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('setting_font_path', _customFontPath!);
+        await setFontFamily('CustomFont');
+      }
+    } catch (e) {
+      debugPrint("字体导入失败: $e");
+    }
+  }
+
+  Future<void> updateTheme(int index) async {
+    if (index >= 0 && index < themes.length) {
+      _themeIndex = index;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('setting_theme_index', index);
+      notifyListeners();
+    }
+  }
+
+  Future<void> toggleBackgroundBlur(bool val) async {
+    _isBackgroundBlurred = val;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('setting_bg_blur', val);
+    notifyListeners();
+  }
+
+  Future<void> setBackgroundImage(String? path) async {
+    _backgroundPath = path;
+    final prefs = await SharedPreferences.getInstance();
+    if (path == null) {
+      await prefs.remove('user_bg_path');
+    } else {
+      await prefs.setString('user_bg_path', path);
+    }
+    notifyListeners();
+  }
+
+  Future<void> _loadFontToEngine(String path) async {
+    try {
+      File file = File(path);
+      var fontData = await file.readAsBytes();
+      String fontName = 'CustomFont';
+      var fontLoader = FontLoader(fontName);
+      fontLoader.addFont(Future.value(ByteData.view(fontData.buffer)));
+      await fontLoader.load();
+      _fontFamily = fontName;
+    } catch (e) {
+      debugPrint("注册字体失败: $e");
+    }
+  }
+
+  Future<void> updateAvatarPath(String path) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final savedFile = await File(path).copy('${directory.path}/avatar_$timestamp.jpg');
+      _avatarPath = savedFile.path;
+      // 这里不再自动设置 backgroundPath，防止干扰开关
+
+      await _updatePalette();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_avatar_path', _avatarPath!);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("头像保存失败: $e");
+    }
+  }
+
+  Future<void> _updatePalette() async {
+    if (_avatarPath == null) return;
+    try {
+      _paletteGenerator = await PaletteGenerator.fromImageProvider(
+        FileImage(File(_avatarPath!)),
+        maximumColorCount: 20,
+      );
+    } catch (e) {
+      debugPrint("调色板生成失败: $e");
+    }
+  }
+}

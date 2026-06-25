@@ -1,0 +1,168 @@
+
+
+========================================
+FILE: lib\main.dart
+========================================
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart'; // 【新增】引入国际化数据初始化包
+import 'package:monet_writer/providers/theme_provider.dart';
+import 'package:monet_writer/services/database_service.dart';
+import 'package:monet_writer/providers/user_provider.dart';
+import 'package:monet_writer/services/ai_service.dart';
+
+// 页面引入
+import 'package:monet_writer/pages/bookshelf/bookshelf_page.dart';
+import 'package:monet_writer/pages/profile_page.dart';
+
+void main() async {
+  // 1. 确保 Flutter 绑定初始化
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. 【关键修复】初始化中文日期格式数据
+  // 这行代码解决了 "LocaleDataException: Locale data has not been initialized" 报错
+  await initializeDateFormatting('zh_CN', null);
+
+  // 3. 初始化数据库服务
+  await DatabaseService().init();
+
+  // 4. 初始化用户数据 (预加载头像、昵称、设置)
+  final userProvider = UserProvider();
+  await userProvider.loadUserData();
+
+  // 5. 初始化 AI 配置 (预加载 API Key)
+  final aiProvider = AiProvider();
+  await aiProvider.loadConfig();
+
+  runApp(
+    // 6. 注入全局 Provider
+    MultiProvider(
+      providers: [
+        // 主题管理
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        // 用户数据管理 (使用已初始化的实例)
+        ChangeNotifierProvider.value(value: userProvider),
+        // AI 服务管理
+        ChangeNotifierProvider.value(value: aiProvider),
+      ],
+      child: const MonetWriterApp(),
+    ),
+  );
+}
+
+class MonetWriterApp extends StatelessWidget {
+  const MonetWriterApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // 监听主题变化
+    final themeProvider = context.watch<ThemeProvider>();
+
+    return MaterialApp(
+      title: '落笔',
+      debugShowCheckedModeBanner: false, // 去除右上角 Debug 标签
+
+      // 浅色主题
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: themeProvider.seedColor,
+          brightness: Brightness.light,
+        ),
+      ),
+
+      // 深色主题
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: themeProvider.seedColor,
+          brightness: Brightness.dark,
+        ),
+      ),
+
+      // 跟随系统或用户设置的主题模式
+      themeMode: themeProvider.themeMode,
+
+      // App 入口页面
+      home: const MainScaffold(),
+    );
+  }
+}
+
+/// 主脚手架：负责底部导航切换
+class MainScaffold extends StatefulWidget {
+  const MainScaffold({super.key});
+
+  @override
+  State<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends State<MainScaffold> {
+  int _currentIndex = 0;
+
+  // 页面列表
+  final List<Widget> _pages = [
+    const BookshelfPage(), // 索引 0: 写作/书架
+    const ProfilePage(),   // 索引 1: 我的/设置
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // 显示当前选中的页面
+      body: _pages[_currentIndex],
+
+      // 底部导航栏 (Material 3 风格)
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.book_outlined),
+            selectedIcon: Icon(Icons.book),
+            label: '写作',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: '我的',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+========================================
+FILE: lib\models\ai_config.dart
+========================================
+
+import 'package:isar/isar.dart';
+
+part 'ai_config.g.dart';
+
+@collection
+class AiConfig {
+  Id id = Isar.autoIncrement;
+
+  /// 服务商: google, openai, silicon, deepseek
+  String provider = 'google';
+
+  /// API Key
+  String apiKey = '';
+
+  /// Base URL (OpenAI 格式接口专用)
+  String baseUrl = '';
+
+  /// 模型名称 (如 gemini-pro, deepseek-chat)
+  String modelName = '';
+
+  /// 【关键修复】新增字段，解决 getter not defined 报错
+  String? customPrompt;
+}

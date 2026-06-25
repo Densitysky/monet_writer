@@ -1,0 +1,25 @@
+
+
+========================================
+FILE: lib\models\character_event.dart
+========================================
+
+import 'package:isar/isar.dart';
+
+part 'character_event.g.dart';
+
+@embedded
+class CharacterEvent {
+  String? title;       // 事件概要 (如：家族灭门)
+  String? content;     // 详细描述
+  String? timePoint;   // 时间点 (如：宣和三年，或 18岁)
+  String? chapterSource; // 来源章节 (可选，用于溯源)
+
+  // 辅助构造
+  CharacterEvent({
+    this.title,
+    this.content,
+    this.timePoint,
+    this.chapterSource,
+  });
+}

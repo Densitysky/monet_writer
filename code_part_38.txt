@@ -1,0 +1,590 @@
+
+
+========================================
+FILE: lib\services\database_service.dart
+========================================
+
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/chapter.dart';
+import 'package:monet_writer/models/prompt_template.dart';
+import 'package:monet_writer/models/daily_stats.dart';
+import 'package:monet_writer/models/ai_config.dart';
+import 'package:intl/intl.dart';
+
+class DatabaseService {
+  static final DatabaseService _instance = DatabaseService._internal();
+  factory DatabaseService() => _instance;
+  DatabaseService._internal();
+
+  late Isar _isar;
+  Isar get isar => _isar;
+
+  /// 初始化数据库
+  Future<void> init() async {
+    final dir = await getApplicationDocumentsDirectory();
+    _isar = await Isar.open(
+      [
+        BookSchema,
+        ChapterSchema,
+        PromptTemplateSchema,
+        DailyStatsSchema,
+        AiConfigSchema,
+      ],
+      directory: dir.path,
+    );
+  }
+
+  // ==================== 数据统计核心逻辑 (已升级) ====================
+
+  /// 更新今日码字统计 (升级版：支持记录具体章节)
+  /// [delta] 变化的字数
+  /// [bookTitle] 书名
+  /// [chapterTitle] 章节名
+  Future<void> updateDailyStats(int delta, String bookTitle, String chapterTitle) async {
+    if (delta == 0) return;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final timeStr = DateFormat('HH:mm').format(now);
+
+    await _isar.writeTxn(() async {
+      DailyStats? stats = await _isar.dailyStats
+          .filter()
+          .dateEqualTo(today)
+          .findFirst();
+
+      if (stats == null) {
+        // 新建当天的统计
+        stats = DailyStats()
+          ..date = today
+          ..wordCount = delta > 0 ? delta : 0
+          ..updatedAt = now
+          ..logs = [
+            DailyLog()
+              ..timeStr = timeStr
+              ..bookTitle = bookTitle
+              ..chapterTitle = chapterTitle
+              ..wordCountChange = delta
+          ];
+      } else {
+        // 更新当天总字数
+        stats.wordCount += delta;
+        if (stats.wordCount < 0) stats.wordCount = 0;
+        stats.updatedAt = now;
+
+        // 更新日志列表 (合并同章节记录)
+        List<DailyLog> currentLogs = stats.logs.toList();
+
+        final existingLogIndex = currentLogs.indexWhere(
+                (log) => log.bookTitle == bookTitle && log.chapterTitle == chapterTitle
+        );
+
+        if (existingLogIndex != -1) {
+          // 更新已有记录
+          final log = currentLogs[existingLogIndex];
+          log.wordCountChange += delta;
+          log.timeStr = timeStr; // 更新为最新操作时间
+          currentLogs[existingLogIndex] = log;
+        } else {
+          // 新增一条记录
+          currentLogs.insert(0, DailyLog() // 插到最前面
+            ..timeStr = timeStr
+            ..bookTitle = bookTitle
+            ..chapterTitle = chapterTitle
+            ..wordCountChange = delta
+          );
+        }
+        stats.logs = currentLogs;
+      }
+
+      await _isar.dailyStats.put(stats);
+    });
+  }
+
+  // --- 统计查询方法 (保留完整逻辑) ---
+
+  Future<int> getTodayWordCount() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final stats = await _isar.dailyStats.filter().dateEqualTo(today).findFirst();
+    return stats?.wordCount ?? 0;
+  }
+
+  Future<int> getTotalWordCount() async {
+    return await _isar.books.filter().isDeletedEqualTo(false).wordCountProperty().sum();
+  }
+
+  Future<int> getConsecutiveDays() async {
+    final statsList = await _isar.dailyStats.filter().wordCountGreaterThan(0).sortByDateDesc().findAll();
+    if (statsList.isEmpty) return 0;
+    int streak = 0;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final latestDate = statsList.first.date;
+    if (today.difference(latestDate).inDays > 1) return 0;
+
+    DateTime checkDate = today;
+    if (!statsList.any((s) => s.date.isAtSameMomentAs(today))) {
+      checkDate = today.subtract(const Duration(days: 1));
+    }
+    final activeDays = statsList.map((e) => e.date).toSet();
+    if (activeDays.contains(checkDate)) {
+      streak++;
+      for (int d = 1; d < 3650; d++) {
+        if (activeDays.contains(checkDate.subtract(Duration(days: d)))) streak++; else break;
+      }
+    }
+    return streak;
+  }
+
+  Future<List<DailyStats>> getWeeklyStats() async {
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    return await _isar.dailyStats.filter().dateGreaterThan(today.subtract(const Duration(days: 7))).sortByDate().findAll();
+  }
+
+  Future<DailyStats?> getPeakRecord() async => await _isar.dailyStats.where().sortByWordCountDesc().findFirst();
+
+  Future<int> getActiveDaysCount() async => await _isar.dailyStats.filter().wordCountGreaterThan(0).count();
+
+  Future<List<DailyStats>> getMonthlyStats(DateTime month) async {
+    final start = DateTime(month.year, month.month, 1);
+    final end = DateTime(month.year, month.month + 1, 1).subtract(const Duration(seconds: 1));
+    return await _isar.dailyStats.filter().dateBetween(start, end).sortByDate().findAll();
+  }
+
+  Future<List<DailyStats>> getCurrentMonthStats() async => getMonthlyStats(DateTime.now());
+
+  // ==================== 书籍与章节基础操作 (已补全) ====================
+
+  Future<void> createBook(String title, {String? desc, String? coverPath}) async {
+    final newBook = Book()
+      ..title = title
+      ..description = desc
+      ..coverPath = coverPath
+      ..createdAt = DateTime.now()
+      ..updatedAt = DateTime.now();
+
+    await _isar.writeTxn(() async {
+      await _isar.books.put(newBook);
+    });
+  }
+
+  Future<List<Book>> getAllBooks() async {
+    return await _isar.books
+        .filter()
+        .isDeletedEqualTo(false)
+        .sortByUpdatedAtDesc()
+        .findAll();
+  }
+
+  Stream<List<Book>> watchDeletedBooks() {
+    return _isar.books
+        .filter()
+        .isDeletedEqualTo(true)
+        .sortByUpdatedAtDesc()
+        .watch(fireImmediately: true);
+  }
+
+  Future<void> restoreBook(int bookId) async {
+    await _isar.writeTxn(() async {
+      final book = await _isar.books.get(bookId);
+      if (book != null) {
+        book.isDeleted = false;
+        book.updatedAt = DateTime.now();
+        await _isar.books.put(book);
+      }
+    });
+  }
+
+  Future<void> deleteBookPermanently(int bookId) async {
+    await _isar.writeTxn(() async {
+      // 级联删除章节
+      await _isar.chapters.filter().bookIdEqualTo(bookId).deleteAll();
+      // 删除书籍
+      await _isar.books.delete(bookId);
+    });
+  }
+
+  Future<List<Chapter>> getChaptersForBook(int bookId) async {
+    return await _isar.chapters
+        .filter()
+        .bookIdEqualTo(bookId)
+        .sortByOrderIndex()
+        .findAll();
+  }
+
+  Future<void> createChapter(int bookId, String title) async {
+    await _isar.writeTxn(() async {
+      final count = await _isar.chapters.filter().bookIdEqualTo(bookId).count();
+
+      final newChapter = Chapter()
+        ..bookId = bookId
+        ..title = title
+        ..content = ''
+        ..orderIndex = count
+        ..updatedAt = DateTime.now();
+
+      await _isar.chapters.put(newChapter);
+
+      // 更新书籍时间
+      final book = await _isar.books.get(bookId);
+      if (book != null) {
+        book.updatedAt = DateTime.now();
+        await _isar.books.put(book);
+      }
+    });
+  }
+
+  Future<void> updateChapterContent(int chapterId, String content, int wordCount) async {
+    await _isar.writeTxn(() async {
+      final chapter = await _isar.chapters.get(chapterId);
+      if (chapter != null) {
+        chapter.content = content;
+        chapter.wordCount = wordCount;
+        chapter.updatedAt = DateTime.now();
+        await _isar.chapters.put(chapter);
+      }
+    });
+  }
+
+  // ==================== AI 配置管理 (新增) ====================
+
+  /// 获取所有 AI 配置
+  Future<List<AiConfig>> getAllAiConfigs() async {
+    return await _isar.aiConfigs.where().findAll();
+  }
+
+  /// 保存或更新 AI 配置
+  Future<void> saveAiConfig(AiConfig config) async {
+    await _isar.writeTxn(() async {
+      await _isar.aiConfigs.put(config);
+    });
+  }
+
+  /// 删除 AI 配置
+  Future<void> deleteAiConfig(int id) async {
+    await _isar.writeTxn(() async {
+      await _isar.aiConfigs.delete(id);
+    });
+  }
+}
+
+
+========================================
+FILE: lib\services\export_service.dart
+========================================
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_file_dialog/flutter_file_dialog.dart';
+import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/chapter.dart';
+import 'package:monet_writer/services/database_service.dart';
+import 'package:monet_writer/utils/epub_builder.dart'; // 【引入 EpubBuilder】
+
+class ExportService {
+
+  // 1. TXT 导出逻辑 (保持不变)
+  static Future<void> exportToTxt(BuildContext context, Book book) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('正在生成 TXT 文件...'), duration: Duration(milliseconds: 1000)),
+      );
+
+      final isar = DatabaseService().isar;
+      final chapters = await isar.chapters
+          .filter()
+          .bookIdEqualTo(book.id)
+          .sortByOrderIndex()
+          .findAll();
+
+      if (chapters.isEmpty) {
+        _showError(context, '这本书还没有章节');
+        return;
+      }
+
+      final StringBuffer buffer = StringBuffer();
+      buffer.writeln("《${book.title}》");
+      buffer.writeln("作者：${book.authorName ?? '佚名'}");
+      buffer.writeln("\n" + ("=" * 20) + "\n");
+
+      for (var chapter in chapters) {
+        buffer.writeln(chapter.title);
+        buffer.writeln("-" * 20);
+        buffer.writeln(chapter.content);
+        buffer.writeln("\n\n");
+      }
+
+      await _saveFileToDisk(context, book.title, 'txt', buffer.toString().codeUnits);
+
+    } catch (e) {
+      _showError(context, 'TXT 导出失败: $e');
+    }
+  }
+
+  // 2. 【新增】EPUB 导出逻辑
+  static Future<void> exportToEpub(BuildContext context, Book book) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('正在生成 EPUB 电子书...'), duration: Duration(seconds: 2)),
+      );
+
+      // 1. 获取章节数据
+      final isar = DatabaseService().isar;
+      final chapters = await isar.chapters
+          .filter()
+          .bookIdEqualTo(book.id)
+          .sortByOrderIndex()
+          .findAll();
+
+      if (chapters.isEmpty) {
+        _showError(context, '这本书还没有章节');
+        return;
+      }
+
+      // 2. 调用 EpubBuilder 生成二进制数据
+      final epubBytes = await EpubBuilder.build(book, chapters);
+
+      // 3. 保存文件
+      if (context.mounted) {
+        await _saveFileToDisk(context, book.title, 'epub', epubBytes);
+      }
+
+    } catch (e) {
+      _showError(context, 'EPUB 导出失败: $e');
+      debugPrint(e.toString());
+    }
+  }
+
+  // --- 通用保存逻辑 (复用) ---
+  static Future<void> _saveFileToDisk(BuildContext context, String title, String ext, List<int> bytes) async {
+    // 1. 写入临时文件
+    final directory = await getTemporaryDirectory();
+    final safeTitle = title.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    final fileName = "$safeTitle.$ext";
+    final tempFile = File('${directory.path}/$fileName');
+
+    await tempFile.writeAsBytes(bytes);
+
+    if (!context.mounted) return;
+
+    // 2. 调起系统保存
+    final params = SaveFileDialogParams(
+      sourceFilePath: tempFile.path,
+      fileName: fileName,
+    );
+
+    final filePath = await FlutterFileDialog.saveFile(params: params);
+
+    if (context.mounted && filePath != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✅ $ext 导出成功！'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
+  static void _showError(BuildContext context, String msg) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      );
+    }
+  }
+}
+
+
+========================================
+FILE: lib\services\prompt_manager.dart
+========================================
+
+import 'package:isar/isar.dart';
+import 'package:monet_writer/models/prompt_template.dart';
+import 'package:monet_writer/services/database_service.dart';
+
+/// 提示词管理器
+/// 负责 Prompt 的获取、拼接、重置和更新
+class PromptManager {
+
+  static const String SCENE_CHAR_Extract = 'char_extract';
+  static const String SCENE_CHAR_ANALYSIS = 'char_analysis';
+  static const String SCENE_OUTLINE_NODE = 'outline_node'; // 【新增】章节细纲生成
+  static const String SCENE_WORLD_SETTING = 'world_setting'; // 【新增】世界观/设定补全
+
+  /// 获取构建好的 System Prompt (三明治成品)
+  static Future<String> getSystemPrompt(String sceneCode) async {
+    final isar = DatabaseService().isar;
+    PromptTemplate? template = await isar.promptTemplates
+        .filter()
+        .sceneCodeEqualTo(sceneCode)
+        .findFirst();
+
+    if (template == null) {
+      template = await _initDefaultTemplate(sceneCode);
+    }
+
+    if (template.isAdvancedMode && template.fullOverride != null) {
+      return template.fullOverride!;
+    }
+
+    final buffer = StringBuffer();
+    if (template.baseSystemPrompt != null) buffer.writeln(template.baseSystemPrompt!);
+    if (template.userCustomPreference != null && template.userCustomPreference!.isNotEmpty) {
+      buffer.writeln("\n【用户额外要求】\n${template.userCustomPreference!}");
+    }
+    if (template.formatConstraint != null) buffer.writeln("\n${template.formatConstraint!}");
+
+    return buffer.toString();
+  }
+
+  /// 初始化默认模板
+  static Future<PromptTemplate> _initDefaultTemplate(String sceneCode) async {
+    final template = PromptTemplate()..sceneCode = sceneCode;
+
+    if (sceneCode == SCENE_CHAR_Extract) {
+      template.label = "章节角色提取";
+      template.baseSystemPrompt = "你是一个小说辅助助手。请阅读正文，提取所有登场角色。";
+      template.formatConstraint = '''
+返回 JSON 数组，格式如下：
+[
+  {"name": "角色名", "description": "本章表现简介"}
+]
+只提取有具体名字的角色。忽略代词。
+不要输出 markdown 代码块，直接返回 JSON 字符串。''';
+      template.userCustomPreference = "";
+    }
+    else if (sceneCode == SCENE_CHAR_ANALYSIS) {
+      template.label = "角色深度分析";
+      template.baseSystemPrompt = "你是一个严谨的小说助手。请阅读用户提供的小说正文片段，总结指定角色的信息。";
+      template.formatConstraint = '''
+请返回严格的 JSON 格式：
+{
+  "description": "基于正文的一句话简介（30字内）",
+  "bio": "基于正文的生平/性格/外貌总结",
+  "tags": ["标签1", "标签2"],
+  "events": [
+    {
+      "timePoint": "当前章节名（如：第十章）",
+      "title": "本章该角色的核心行动（如：击败王嫣）",
+      "content": "高度概括的剧情综述（50字内）"
+    }
+  ]
+}
+【重要规则】
+1. 针对提供的章节内容，请将该角色在本章的经历**合并为唯一的一条事件**，不要拆分多条。
+2. 如果该角色本章只是路人，没有实质性剧情，events 数组留空。
+3. 严禁推测或编造。
+不要输出 markdown 代码块，直接返回 JSON 字符串。''';
+      template.userCustomPreference = "必须完全基于正文内容总结。";
+    }
+    // 【新增】大纲节点生成
+    else if (sceneCode == SCENE_OUTLINE_NODE) {
+      template.label = "章节细纲生成";
+      template.baseSystemPrompt = "你是一个网文大纲策划师。请阅读当前章节正文，提炼出核心剧情节点。";
+      template.formatConstraint = '''
+请返回严格的 JSON 格式：
+{
+  "title": "简短的剧情标题（如：主角获得系统）",
+  "content": "剧情梗概（100字以内，概括起承转合）"
+}
+不要输出 markdown 代码块，直接返回 JSON 字符串。''';
+      template.userCustomPreference = "";
+    }
+    // 【新增】世界观/设定补全
+    else if (sceneCode == SCENE_WORLD_SETTING) {
+      template.label = "设定/世界观补全";
+      template.baseSystemPrompt = "你是一个世界观架构师。请阅读小说正文，提取或补充相关的设定信息。";
+      template.formatConstraint = "请直接返回补充后的设定文本，不要包含 JSON 格式，也不要包含“好的”、“以下是设定”等废话。直接输出内容。";
+      template.userCustomPreference = "如果是对现有设定的补充，请保持风格一致。";
+    }
+
+    final isar = DatabaseService().isar;
+    await isar.writeTxn(() async {
+      await isar.promptTemplates.put(template);
+    });
+
+    return template;
+  }
+
+  static Future<void> updateUserPreference(String sceneCode, String preference) async {
+    final isar = DatabaseService().isar;
+    var template = await isar.promptTemplates.filter().sceneCodeEqualTo(sceneCode).findFirst();
+    if (template != null) {
+      await isar.writeTxn(() async {
+        template.userCustomPreference = preference;
+        template.updatedAt = DateTime.now();
+        await isar.promptTemplates.put(template);
+      });
+    }
+  }
+
+  static Future<void> toggleAdvancedMode(String sceneCode, bool isAdvanced) async {
+    final isar = DatabaseService().isar;
+    var template = await isar.promptTemplates.filter().sceneCodeEqualTo(sceneCode).findFirst();
+    if (template != null) {
+      await isar.writeTxn(() async {
+        template.isAdvancedMode = isAdvanced;
+        if (isAdvanced && (template.fullOverride == null || template.fullOverride!.isEmpty)) {
+          final currentSandwich = "${template.baseSystemPrompt}\n\n${template.userCustomPreference}\n\n${template.formatConstraint}";
+          template.fullOverride = currentSandwich;
+        }
+        await isar.promptTemplates.put(template);
+      });
+    }
+  }
+
+  static Future<void> updateFullOverride(String sceneCode, String content) async {
+    final isar = DatabaseService().isar;
+    var template = await isar.promptTemplates.filter().sceneCodeEqualTo(sceneCode).findFirst();
+    if (template != null) {
+      await isar.writeTxn(() async {
+        template.fullOverride = content;
+        await isar.promptTemplates.put(template);
+      });
+    }
+  }
+
+  static Future<PromptTemplate> getTemplate(String sceneCode) async {
+    final isar = DatabaseService().isar;
+    var template = await isar.promptTemplates.filter().sceneCodeEqualTo(sceneCode).findFirst();
+    return template ?? await _initDefaultTemplate(sceneCode);
+  }
+}
+
+
+========================================
+FILE: lib\utils\color_generator.dart
+========================================
+
+import 'dart:math';
+import 'package:flutter/material.dart';
+
+class ColorGenerator {
+  /// 预设的一组低饱和度、高明度的马卡龙色系，适合做背景
+  static const List<Color> _bgColors = [
+    Color(0xFFE8F5E9), // 浅绿
+    Color(0xFFE3F2FD), // 浅蓝
+    Color(0xFFF3E5F5), // 浅紫
+    Color(0xFFFFF3E0), // 浅橙
+    Color(0xFFFFEBEE), // 浅红
+    Color(0xFFE0F7FA), // 青色
+    Color(0xFFFFF8E1), // 浅黄
+    Color(0xFFF1F8E9), // 嫩绿
+  ];
+
+  /// 根据字符串生成固定的背景色
+  static Color generateBgColor(String input) {
+    if (input.isEmpty) return _bgColors[0];
+    final int hash = input.hashCode;
+    final int index = hash.abs() % _bgColors.length;
+    return _bgColors[index];
+  }
+
+  /// 根据背景色计算合适的文字颜色 (通常是深色)
+  static Color getTextColor(Color bgColor) {
+    return HSLColor.fromColor(bgColor).withLightness(0.3).toColor();
+  }
+}

@@ -1,0 +1,618 @@
+
+
+========================================
+FILE: lib\pages\writing\character_profile_page.dart
+========================================
+
+import 'dart:io';
+import 'dart:ui';
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:palette_generator/palette_generator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+
+import 'package:monet_writer/providers/writing_provider.dart';
+import 'package:monet_writer/models/character.dart';
+import 'package:monet_writer/models/character_event.dart';
+import 'package:monet_writer/services/ai_service.dart';
+import 'package:monet_writer/widgets/monet_avatar.dart';
+import 'package:monet_writer/widgets/monet_text_field.dart';
+
+class CharacterProfilePage extends StatefulWidget {
+  final Character character;
+  final int index;
+  final int? groupIndex;
+
+  const CharacterProfilePage({
+    super.key,
+    required this.character,
+    required this.index,
+    this.groupIndex,
+  });
+
+  @override
+  State<CharacterProfilePage> createState() => _CharacterProfilePageState();
+}
+
+class _CharacterProfilePageState extends State<CharacterProfilePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  late TextEditingController _nameCtrl;
+  late TextEditingController _descCtrl;
+  late TextEditingController _bioCtrl;
+  late TextEditingController _tagInputCtrl;
+
+  late String? _avatarPath;
+  late List<String> _tags;
+  Color? _themeColor;
+  bool _isLoadingColor = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+
+    // 初始化数据
+    _nameCtrl = TextEditingController(text: widget.character.name);
+    _descCtrl = TextEditingController(text: widget.character.description);
+    _bioCtrl = TextEditingController(text: widget.character.bio);
+    _tagInputCtrl = TextEditingController();
+
+    _avatarPath = widget.character.avatarPath;
+    _tags = List.from(widget.character.tags ?? []);
+
+    _extractColor();
+  }
+
+  // 【关键优化】监听 Provider 数据变化，自动刷新文本框
+  // 当 AI 在后台完成更新时，Provider 会 notifyListeners，触发 build，进而触发此方法
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.watch<WritingProvider>();
+    final char = _getCurrentCharacter(provider);
+
+    if (char != null) {
+      // 如果 Provider 里的 bio 变了，且跟当前输入框不一样，就更新输入框
+      // 注意：为了防止用户打字时被打断，这里只在差别较大（AI 填入新内容）时更新
+      // 更好的体验是：检测 focus，如果正在输入则不覆盖。但针对 "AI 同步" 场景，覆盖是预期行为。
+      if (char.bio != _bioCtrl.text && char.bio != null) {
+        // 只有当本地为空，或者两者长度差很大（说明有新内容）时才自动刷新，避免光标跳动
+        // 这里简单处理：直接刷新，因为 AI 同步是用户主动触发的
+        _bioCtrl.text = char.bio!;
+      }
+      if (char.description != _descCtrl.text && char.description != null) {
+        _descCtrl.text = char.description!;
+      }
+      // Tags 更新
+      if (char.tags != null && char.tags.toString() != _tags.toString()) {
+        setState(() {
+          _tags = List.from(char.tags!);
+        });
+      }
+    }
+  }
+
+  Character? _getCurrentCharacter(WritingProvider provider) {
+    if (widget.groupIndex == null) {
+      if (provider.book.characters != null && widget.index < provider.book.characters!.length) {
+        return provider.book.characters![widget.index];
+      }
+    } else {
+      if (provider.book.characterGroups != null && widget.groupIndex! < provider.book.characterGroups!.length) {
+        final group = provider.book.characterGroups![widget.groupIndex!];
+        if (group.characters != null && widget.index < group.characters!.length) {
+          return group.characters![widget.index];
+        }
+      }
+    }
+    return null;
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _nameCtrl.dispose();
+    _descCtrl.dispose();
+    _bioCtrl.dispose();
+    _tagInputCtrl.dispose();
+    super.dispose();
+  }
+
+  void _saveCharacter() {
+    // 退出时保存，或者修改时保存
+    context.read<WritingProvider>().updateCharacter(
+      widget.index,
+      groupIndex: widget.groupIndex,
+      newName: _nameCtrl.text,
+      newDesc: _descCtrl.text,
+      newBio: _bioCtrl.text,
+      newAvatarPath: _avatarPath,
+      newTags: _tags,
+    );
+  }
+
+  Future<void> _extractColor() async {
+    if (_avatarPath == null) {
+      if (mounted) setState(() => _isLoadingColor = false);
+      return;
+    }
+    final file = File(_avatarPath!);
+    if (!file.existsSync()) {
+      if (mounted) setState(() => _isLoadingColor = false);
+      return;
+    }
+    try {
+      final palette = await PaletteGenerator.fromImageProvider(FileImage(file));
+      if (mounted) {
+        setState(() {
+          _themeColor = palette.dominantColor?.color;
+          _isLoadingColor = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingColor = false);
+    }
+  }
+
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: image.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: '裁切头像',
+            toolbarColor: Theme.of(context).colorScheme.primary,
+            statusBarColor: Theme.of(context).colorScheme.primary,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: Theme.of(context).colorScheme.primary,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true),
+        IOSUiSettings(title: '裁切头像', aspectRatioLockEnabled: true),
+      ],
+    );
+
+    if (croppedFile != null) {
+      setState(() {
+        _avatarPath = croppedFile.path;
+        _isLoadingColor = true;
+      });
+      _extractColor();
+      _saveCharacter();
+    }
+  }
+
+  // 【优化】后台运行模式
+  void _syncWithAi() {
+    final aiProvider = context.read<AiProvider>();
+    if (aiProvider.config.apiKey.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请先在设置中配置 AI API Key')));
+      return;
+    }
+    if (_nameCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请先填写角色名字')));
+      return;
+    }
+
+    // 1. 立即给用户反馈
+    ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚡ 任务已在后台开始，您可以继续其他操作...'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        )
+    );
+
+    // 2. 调用 Provider 开启任务 (不使用 await 阻塞 UI)
+    context.read<WritingProvider>().analyzeCharacterWithAi(
+      aiProvider.config,
+      _nameCtrl.text,
+      index: widget.index,
+      groupIndex: widget.groupIndex,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final provider = context.watch<WritingProvider>(); // 监听更新
+
+    // 检查是否正在分析中
+    final isAnalyzing = provider.isAnalyzing(_nameCtrl.text);
+
+    final primaryColor = _themeColor ?? theme.colorScheme.primary;
+    final isDarkBg = ThemeData.estimateBrightnessForColor(primaryColor) == Brightness.dark;
+    final onPrimaryColor = isDarkBg ? Colors.white : Colors.black;
+
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (_) => _saveCharacter(),
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar(
+              expandedHeight: 280,
+              pinned: true,
+              backgroundColor: primaryColor,
+              foregroundColor: onPrimaryColor,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (_avatarPath != null)
+                      Image.file(File(_avatarPath!), fit: BoxFit.cover),
+                    BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(color: Colors.black.withOpacity(0.3)),
+                    ),
+                    Center(
+                      child: MonetAvatar(
+                        avatarPath: _avatarPath,
+                        name: _nameCtrl.text,
+                        size: 120,
+                        heroTag: 'char_img_${widget.groupIndex ?? "root"}_${widget.index}',
+                        onTap: _pickAvatar,
+                        showBorder: true,
+                      ),
+                    ),
+                  ],
+                ),
+                title: Text(_nameCtrl.text.isEmpty ? '角色详情' : _nameCtrl.text),
+                centerTitle: true,
+              ),
+              bottom: TabBar(
+                controller: _tabController,
+                labelColor: onPrimaryColor,
+                unselectedLabelColor: onPrimaryColor.withOpacity(0.6),
+                indicatorColor: onPrimaryColor,
+                tabs: const [Tab(text: '基础资料'), Tab(text: '生平档案')],
+              ),
+            ),
+          ],
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildBasicInfoTab(theme),
+              _buildBioTab(theme),
+            ],
+          ),
+        ),
+
+        // 浮动按钮
+        floatingActionButton: isAnalyzing
+            ? FloatingActionButton.extended(
+          onPressed: null,
+          icon: const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+          label: const Text('AI 分析中...'),
+          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+        )
+            : _buildFab(theme),
+      ),
+    );
+  }
+
+  Widget _buildFab(ThemeData theme) {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, child) {
+        if (_tabController.index == 1) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FloatingActionButton.small(
+                heroTag: 'fab_ai_sync',
+                onPressed: _syncWithAi,
+                backgroundColor: theme.colorScheme.secondaryContainer,
+                child: const Icon(Icons.auto_awesome),
+              ),
+              const SizedBox(height: 12),
+              FloatingActionButton.extended(
+                heroTag: 'fab_add_event',
+                onPressed: () => _showEventEditDialog(context),
+                icon: const Icon(Icons.add),
+                label: const Text('添加经历'),
+              ),
+            ],
+          );
+        } else {
+          return FloatingActionButton.extended(
+            heroTag: 'fab_ai_sync_main',
+            onPressed: _syncWithAi,
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('AI 同步'),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildBasicInfoTab(ThemeData theme) {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        MonetTextField(
+          controller: _nameCtrl,
+          label: '角色姓名',
+          icon: Icons.person,
+          onChanged: (_) => setState((){}),
+        ),
+        const SizedBox(height: 16),
+        MonetTextField(
+          controller: _descCtrl,
+          label: '一句话简介 (定位)',
+          hint: '例如：深藏不露的扫地僧',
+          maxLines: 2,
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Text('标签', style: theme.textTheme.titleMedium),
+            const Spacer(),
+            IconButton(onPressed: _showAddTagDialog, icon: const Icon(Icons.add_circle_outline)),
+          ],
+        ),
+        Wrap(
+          spacing: 8,
+          children: _tags.map((tag) => Chip(
+            label: Text(tag),
+            onDeleted: () => setState(() => _tags.remove(tag)),
+          )).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBioTab(ThemeData theme) {
+    // 获取最新的角色对象
+    final provider = context.watch<WritingProvider>();
+    final char = _getCurrentCharacter(provider);
+    final events = char?.lifeEvents ?? [];
+
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('生平总括', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                MonetTextField(
+                  controller: _bioCtrl,
+                  label: '角色设定/背景故事',
+                  hint: '在此书写角色的出身、性格成因等基调设定...',
+                  maxLines: null,
+                  minLines: 5,
+                ),
+                const SizedBox(height: 24),
+                Text('经历时间轴', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+
+        if (events.isEmpty)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: Text('暂无经历事件，点击右下角添加', style: TextStyle(color: Colors.grey))),
+            ),
+          )
+        else
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                final event = events[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          child: Column(
+                            children: [
+                              Container(width: 2, height: 16, color: theme.dividerColor),
+                              Container(
+                                width: 10, height: 10,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              Expanded(child: Container(width: 2, color: theme.dividerColor)),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Card(
+                            elevation: 0,
+                            color: theme.colorScheme.surfaceContainerLow,
+                            margin: EdgeInsets.zero,
+                            child: InkWell(
+                              onTap: () => _showEventEditDialog(context, event: event, index: index),
+                              onLongPress: () => _confirmDeleteEvent(context, index),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (event.timePoint != null && event.timePoint!.isNotEmpty)
+                                          Container(
+                                            margin: const EdgeInsets.only(right: 8),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: theme.colorScheme.primaryContainer,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              event.timePoint!,
+                                              style: TextStyle(fontSize: 10, color: theme.colorScheme.onPrimaryContainer),
+                                            ),
+                                          ),
+                                        Expanded(
+                                          child: Text(
+                                            event.title ?? '未命名事件',
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (event.content != null && event.content!.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        event.content!,
+                                        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ]
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              childCount: events.length,
+            ),
+          ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+      ],
+    );
+  }
+
+  void _showAddTagDialog() {
+    _tagInputCtrl.clear();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('添加标签'),
+        content: MonetTextField(
+          controller: _tagInputCtrl,
+          label: '标签名',
+          hint: '例如：火系',
+          autoFocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+          TextButton(
+            onPressed: () {
+              if (_tagInputCtrl.text.isNotEmpty) {
+                setState(() => _tags.add(_tagInputCtrl.text));
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('添加'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEventEditDialog(BuildContext context, {CharacterEvent? event, int? index}) {
+    final titleCtrl = TextEditingController(text: event?.title);
+    final contentCtrl = TextEditingController(text: event?.content);
+    final timeCtrl = TextEditingController(text: event?.timePoint);
+    final isEdit = event != null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(isEdit ? '编辑经历' : '添加经历', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: MonetTextField(controller: timeCtrl, label: '时间点', hint: '如: 18岁'),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: MonetTextField(controller: titleCtrl, label: '事件概要', hint: '如: 拜入宗门', autoFocus: true),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            MonetTextField(controller: contentCtrl, label: '详细描述', hint: '发生了什么...', maxLines: 3),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  if (titleCtrl.text.isNotEmpty) {
+                    final provider = context.read<WritingProvider>();
+                    if (isEdit) {
+                      provider.updateCharacterEvent(
+                        widget.index,
+                        index!,
+                        groupIndex: widget.groupIndex,
+                        title: titleCtrl.text,
+                        content: contentCtrl.text,
+                        timePoint: timeCtrl.text,
+                      );
+                    } else {
+                      provider.addCharacterEvent(
+                        widget.index,
+                        groupIndex: widget.groupIndex,
+                        title: titleCtrl.text,
+                        content: contentCtrl.text,
+                        timePoint: timeCtrl.text,
+                      );
+                    }
+                    Navigator.pop(ctx);
+                  }
+                },
+                child: const Text('保存'),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteEvent(BuildContext context, int eventIndex) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('删除此经历？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(
+            onPressed: () {
+              context.read<WritingProvider>().deleteCharacterEvent(widget.index, eventIndex, groupIndex: widget.groupIndex);
+              Navigator.pop(ctx);
+            },
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+}

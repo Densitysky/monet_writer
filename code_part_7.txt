@@ -1,0 +1,30 @@
+
+
+========================================
+FILE: lib\models\chapter.dart
+========================================
+
+import 'package:isar/isar.dart';
+
+part 'chapter.g.dart';
+
+@collection
+class Chapter {
+  Id id = Isar.autoIncrement;
+
+  @Index()
+  late int bookId;
+
+  late String title;
+
+  late String content;
+
+  // 【新增】本章细纲
+  String? outline;
+
+  int wordCount = 0;
+
+  late int orderIndex;
+
+  late DateTime updatedAt;
+}

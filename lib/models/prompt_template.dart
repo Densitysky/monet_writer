@@ -1,0 +1,40 @@
+import 'package:isar/isar.dart';
+
+part 'prompt_template.g.dart';
+
+@collection
+class PromptTemplate {
+  Id id = Isar.autoIncrement;
+
+  /// 场景代码 (唯一标识)
+  /// 例如: 'char_extract' (角色提取), 'char_analysis' (深度分析)
+  @Index(unique: true, replace: true)
+  late String sceneCode;
+
+  /// 显示名称
+  late String label;
+
+  // --- 三明治结构 ---
+
+  /// 1. 顶层：系统预设 (Base Persona)
+  /// 例如："你是一个专业的小说助手..."
+  String? baseSystemPrompt;
+
+  /// 2. 夹心层：用户自定义偏好 (User Preference) - 简单模式只改这里
+  /// 例如："请重点关注角色的武器描述"
+  String? userCustomPreference;
+
+  /// 3. 底层：格式约束 (Format Constraint)
+  /// 例如："必须返回 JSON..."
+  String? formatConstraint;
+
+  // --- 高级模式 ---
+
+  /// 是否开启高级模式 (开启后忽略三明治结构，直接使用 fullOverride)
+  bool isAdvancedMode = false;
+
+  /// 全量覆盖 Prompt (高级模式专用)
+  String? fullOverride;
+
+  DateTime updatedAt = DateTime.now();
+}

@@ -1,0 +1,545 @@
+
+
+========================================
+FILE: lib\pages\profile_page.dart
+========================================
+
+import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:monet_writer/providers/user_provider.dart';
+import 'package:monet_writer/pages/settings_page.dart';
+import 'package:monet_writer/pages/image_preview_page.dart';
+// 引入各个功能页面
+import 'package:monet_writer/pages/recycle_bin/recycle_bin_page.dart';
+import 'package:monet_writer/pages/stats/stats_page.dart';
+import 'package:monet_writer/pages/stats/calendar_page.dart';
+
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+
+  @override
+  void initState() {
+    super.initState();
+    // 每次进入页面刷新统计数据，确保数字是最新的
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().refreshStats();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true, // 让背景图延伸到状态栏后
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // 顶部头部区域 (背景、头像、数据概览)
+          const _ProfileHeader(),
+
+          const SizedBox(height: 24),
+
+          // 功能入口按钮栏
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _GridItem(
+                  icon: Icons.bar_chart,
+                  label: '数据统计',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const StatsPage()),
+                    );
+                  }
+              ),
+              _GridItem(
+                  icon: Icons.calendar_month,
+                  label: '码字日历',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CalendarPage()),
+                    );
+                  }
+              ),
+              _GridItem(
+                  icon: Icons.delete_outline,
+                  label: '回收站',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RecycleBinPage()),
+                    );
+                  }
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader();
+
+  // 辅助格式化：将大数字转为 "1.2万" 格式
+  String _formatNumber(int count) {
+    if (count < 10000) return count.toString();
+    return '${(count / 10000).toStringAsFixed(1)}万';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<UserProvider>();
+    final theme = Theme.of(context);
+
+    // --- 1. 背景逻辑构建 ---
+    Widget backgroundLayer;
+    // 优先使用背景大图，没有则用头像图，再没有则用主题色
+    final String? bgPath = user.backgroundPath ?? user.avatarPath;
+
+    if (bgPath != null) {
+      // 有图模式
+      backgroundLayer = Stack(
+        fit: StackFit.expand,
+        children: [
+          // 底层：原图
+          Image.file(File(bgPath), fit: BoxFit.cover),
+
+          // 遮罩层：根据设置决定是“模糊”还是“变暗”
+          if (user.isBackgroundBlurred)
+          // 模糊模式：高斯模糊 + 浅遮罩
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(color: Colors.black.withOpacity(0.3)),
+            )
+          else
+          // 清晰模式：纯黑色半透明遮罩 (确保白色文字清晰)
+            Container(color: Colors.black.withOpacity(0.4)),
+        ],
+      );
+    } else {
+      // 无图模式：使用主题色渐变
+      final color = theme.colorScheme.primary;
+      backgroundLayer = Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color, color.withOpacity(0.6)],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 380, // 保持足够的高度容纳信息
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(
+        // 底部圆角
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: Stack(
+        children: [
+          // A. 背景层
+          backgroundLayer,
+
+          // B. 内容层
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  // 1. 顶部设置按钮
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.settings, color: Colors.white),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SettingsPage()),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 20), // 增加一点顶部距离
+
+                  // 2. 核心用户信息区 (Row布局)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // 左侧：头像
+                      GestureDetector(
+                        onTap: () {
+                          // 点击头像去预览页 (可在预览页更换)
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ImagePreviewPage()),
+                          );
+                        },
+                        child: Hero(
+                          tag: 'user_avatar',
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: CircleAvatar(
+                              radius: 42, // 头像稍微大一点
+                              backgroundColor: Colors.grey[300],
+                              backgroundImage: user.avatarPath != null
+                                  ? FileImage(File(user.avatarPath!))
+                                  : null,
+                              child: user.avatarPath == null
+                                  ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 20), // 头像和文字的间距
+
+                      // 右侧：信息栏
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, // 左对齐
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 昵称 + 编辑 (Row)
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    user.nickname,
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () => _showEditNicknameDialog(context, user),
+                                  child: const Icon(Icons.edit_square, size: 18, color: Colors.white70),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // 等级标签 (静态装饰)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Lv.1 筑基期',
+                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const Spacer(),
+
+                  // 3. 底部数据统计 (显示真实数据)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 40),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _StatItem(
+                            value: user.consecutiveDays.toString(),
+                            label: '连续创作(天)'
+                        ),
+                        const SizedBox(height: 20, child: VerticalDivider(color: Colors.white24)),
+                        _StatItem(
+                            value: _formatNumber(user.totalWords),
+                            label: '累计字数'
+                        ),
+                        const SizedBox(height: 20, child: VerticalDivider(color: Colors.white24)),
+                        _StatItem(
+                            value: user.todayWords.toString(),
+                            label: '今日码字'
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditNicknameDialog(BuildContext context, UserProvider user) {
+    final controller = TextEditingController(text: user.nickname);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('修改昵称'),
+        content: TextField(controller: controller, maxLength: 12),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+          TextButton(onPressed: () {
+            if(controller.text.isNotEmpty) {
+              user.updateNickname(controller.text);
+              Navigator.pop(context);
+            }
+          }, child: const Text('保存')),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String value;
+  final String label;
+  const _StatItem({required this.value, required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)), // 数字稍微放大
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      ],
+    );
+  }
+}
+
+class _GridItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _GridItem({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 100,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          children: [
+            Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(fontSize: 13)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+========================================
+FILE: lib\pages\recycle_bin\recycle_bin_page.dart
+========================================
+
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/services/database_service.dart';
+import 'package:monet_writer/widgets/monet_book_cover.dart';
+
+class RecycleBinPage extends StatelessWidget {
+  const RecycleBinPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('回收站'),
+        centerTitle: true,
+      ),
+      body: StreamBuilder<List<Book>>(
+        stream: DatabaseService().watchDeletedBooks(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+          final books = snapshot.data!;
+
+          if (books.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.delete_outline, size: 80, color: theme.colorScheme.outlineVariant),
+                  const SizedBox(height: 16),
+                  Text(
+                    '回收站是空的',
+                    style: TextStyle(color: theme.colorScheme.outline, fontSize: 16),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: books.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final book = books[index];
+              return _DeletedBookItem(book: book);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DeletedBookItem extends StatelessWidget {
+  final Book book;
+
+  const _DeletedBookItem({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          // 封面 (变灰以示删除)
+          Opacity(
+            opacity: 0.6,
+            child: MonetBookCover(
+              coverPath: book.coverPath,
+              title: book.title,
+              width: 50,
+              height: 70,
+              radius: 6,
+            ),
+          ),
+          const SizedBox(width: 16),
+
+          // 信息
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  book.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '删除时间: ${dateFormat.format(book.updatedAt)}', // 这里暂时用 updatedAt 近似代替
+                  style: TextStyle(color: theme.colorScheme.outline, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${book.wordCount} 字',
+                  style: TextStyle(color: theme.colorScheme.outline, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+
+          // 操作按钮
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filledTonal(
+                onPressed: () => _handleRestore(context),
+                icon: const Icon(Icons.restore),
+                tooltip: '恢复',
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.green.withOpacity(0.1),
+                  foregroundColor: Colors.green,
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                onPressed: () => _handleDeleteForever(context),
+                icon: const Icon(Icons.delete_forever),
+                tooltip: '彻底删除',
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withOpacity(0.1),
+                  foregroundColor: Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleRestore(BuildContext context) async {
+    await DatabaseService().restoreBook(book.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('书籍已恢复到书架')));
+    }
+  }
+
+  void _handleDeleteForever(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('彻底删除'),
+        content: const Text('此操作将永久删除该书及其所有章节，且无法撤销！\n\n确定要继续吗？', style: TextStyle(color: Colors.red)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx); // 关弹窗
+              await DatabaseService().deleteBookPermanently(book.id);
+            },
+            child: const Text('彻底粉碎'),
+          ),
+        ],
+      ),
+    );
+  }
+}
