@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/services/database_service.dart';
 
 import 'components/empty_view.dart';

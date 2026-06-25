@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:monet_writer/services/database_service.dart';
-import 'package:monet_writer/models/daily_stats.dart';
+import 'package:monet_writer/models/book/daily_stats.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});

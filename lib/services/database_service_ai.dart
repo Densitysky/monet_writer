@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/ai_config.dart';
+import 'package:monet_writer/models/ai/ai_config.dart';
 
 /// ── AI 配置 CRUD ──────────────────────────────────────
 

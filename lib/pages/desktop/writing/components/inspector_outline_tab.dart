@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
-import 'package:monet_writer/models/outline_node.dart';
-import 'package:monet_writer/models/outline_tab.dart';
+import 'package:monet_writer/models/outline/outline_node.dart';
+import 'package:monet_writer/models/outline/outline_tab.dart';
 import 'package:monet_writer/services/ai_service.dart';
 
 import 'package:monet_writer/pages/desktop/writing/components/desktop_outline_dialog.dart';

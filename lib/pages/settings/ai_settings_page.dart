@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/services/ai_service.dart';
 // 【关键修复】引入模型定义
-import 'package:monet_writer/models/ai_config.dart';
+import 'package:monet_writer/models/ai/ai_config.dart';
 
 class AiSettingsPage extends StatefulWidget {
   const AiSettingsPage({super.key});

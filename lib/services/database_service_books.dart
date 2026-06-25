@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/book.dart';
-import 'package:monet_writer/models/chapter.dart';
+import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/models/book/chapter.dart';
 
 /// ── 书籍 & 章节 CRUD ──────────────────────────────────
 

@@ -11,8 +11,8 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart'; // 【新增】引入用户阅读主题
 import 'package:monet_writer/providers/theme_provider.dart'; // 【新增】引入双引擎风格
-import 'package:monet_writer/models/character.dart';
-import 'package:monet_writer/models/character_event.dart';
+import 'package:monet_writer/models/character/character.dart';
+import 'package:monet_writer/models/character/character_event.dart';
 import 'package:monet_writer/services/ai_service.dart';
 import 'package:monet_writer/widgets/monet_avatar.dart';
 

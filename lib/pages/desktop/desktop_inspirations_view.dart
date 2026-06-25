@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/inspirations_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
+import 'package:monet_writer/utils/inspiration_tag_colors.dart';
 
 class DesktopInspirationsView extends StatefulWidget {
   const DesktopInspirationsView({super.key});
@@ -332,7 +333,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
   }
 
   Widget _buildTagChip(String tag, Color textColor, Color seedColor) {
-    final tagInfo = _getTagColor(tag);
+    final tagInfo = getInspirationTagColor(tag);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
@@ -348,24 +349,6 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
         ),
       ),
     );
-  }
-
-  // 返回 (背景色, 文字色)
-  (Color, Color) _getTagColor(String tag) {
-    switch (tag) {
-      case '角色':
-        return (const Color(0xFFE6F1FB), const Color(0xFF185FA5));
-      case '情节':
-        return (const Color(0xFFE6F1FB), const Color(0xFF185FA5));
-      case '场景':
-        return (const Color(0xFFFBEAF0), const Color(0xFF993556));
-      case '金句':
-        return (const Color(0xFFE1F5EE), const Color(0xFF0F6E56));
-      case '世界观':
-        return (const Color(0xFFFAEEDA), const Color(0xFFBA7517));
-      default:
-        return (const Color(0xFFF1EFE8), const Color(0xFF5F5E5A));
-    }
   }
 
   Widget _buildAddCard(
@@ -636,7 +619,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
                           .where((t) => t != '全部')
                           .map((tag) {
                         final isSelected = selectedTag == tag;
-                        final tagInfo = _getTagColor(tag);
+                        final tagInfo = getInspirationTagColor(tag);
                         return GestureDetector(
                           onTap: () => setDialogState(() => selectedTag = tag),
                           child: Container(

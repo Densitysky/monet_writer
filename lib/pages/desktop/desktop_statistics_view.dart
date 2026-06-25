@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/services/database_service.dart';
-import 'package:monet_writer/models/daily_stats.dart';
+import 'package:monet_writer/models/book/daily_stats.dart';
 
 // 请确认这里的路径与你新建组件的实际路径一致！
 import 'package:monet_writer/pages/desktop/components/desktop_crop_dialog.dart';

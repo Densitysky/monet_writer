@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/prompt_template.dart';
+import 'package:monet_writer/models/ai/prompt_template.dart';
 import 'package:monet_writer/services/database_service.dart';
 
 /// 提示词管理器

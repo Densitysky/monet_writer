@@ -1,12 +1,11 @@
 import 'package:isar/isar.dart';
-import 'custom_outline.dart';
-import 'outline_group.dart';
-import 'character.dart';
-import 'character_group.dart';
-import 'outline_tab.dart';
-import 'outline_node.dart';
-// 【关键修复】必须显式引入这个文件，Book 才能识别到深层嵌套的 CharacterEventSchema
-import 'character_event.dart';
+import 'package:monet_writer/models/outline/custom_outline.dart';
+import 'package:monet_writer/models/outline/outline_group.dart';
+import 'package:monet_writer/models/character/character.dart';
+import 'package:monet_writer/models/character/character_group.dart';
+import 'package:monet_writer/models/outline/outline_tab.dart';
+import 'package:monet_writer/models/outline/outline_node.dart';
+import 'package:monet_writer/models/character/character_event.dart';
 
 part 'book.g.dart';
 

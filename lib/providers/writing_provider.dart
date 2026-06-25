@@ -7,20 +7,20 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/book.dart';
-import 'package:monet_writer/models/chapter.dart';
-import 'package:monet_writer/models/custom_outline.dart';
-import 'package:monet_writer/models/character.dart';
-import 'package:monet_writer/models/character_group.dart';
-import 'package:monet_writer/models/outline_tab.dart';
-import 'package:monet_writer/models/outline_node.dart';
-import 'package:monet_writer/models/ai_config.dart';
-import 'package:monet_writer/models/character_event.dart';
+import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/models/book/chapter.dart';
+import 'package:monet_writer/models/outline/custom_outline.dart';
+import 'package:monet_writer/models/character/character.dart';
+import 'package:monet_writer/models/character/character_group.dart';
+import 'package:monet_writer/models/outline/outline_tab.dart';
+import 'package:monet_writer/models/outline/outline_node.dart';
+import 'package:monet_writer/models/ai/ai_config.dart';
+import 'package:monet_writer/models/character/character_event.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/services/ai_service.dart';
 import 'package:monet_writer/services/prompt_manager.dart';
-import 'package:monet_writer/models/chapter_history.dart';
-import 'package:monet_writer/models/trashed_chapter.dart';
+import 'package:monet_writer/models/book/chapter_history.dart';
+import 'package:monet_writer/models/book/trashed_chapter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // 【核心新增】：引入排版引擎控制器

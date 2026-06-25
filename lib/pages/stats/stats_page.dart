@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:monet_writer/models/daily_stats.dart';
+import 'package:monet_writer/models/book/daily_stats.dart';
 import 'package:monet_writer/services/database_service.dart';
 
 class StatsPage extends StatefulWidget {

@@ -6,14 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import 'package:monet_writer/models/book.dart';
-import 'package:monet_writer/models/chapter.dart';
-import 'package:monet_writer/models/daily_stats.dart';
-import 'package:monet_writer/models/ai_config.dart';
-import 'package:monet_writer/models/chapter_history.dart';
-import 'package:monet_writer/models/trashed_chapter.dart';
-import 'package:monet_writer/models/prompt_template.dart';
-import 'package:monet_writer/models/inspiration_fragment.dart';
+import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/models/book/chapter.dart';
+import 'package:monet_writer/models/book/daily_stats.dart';
+import 'package:monet_writer/models/ai/ai_config.dart';
+import 'package:monet_writer/models/book/chapter_history.dart';
+import 'package:monet_writer/models/book/trashed_chapter.dart';
+import 'package:monet_writer/models/ai/prompt_template.dart';
+import 'package:monet_writer/models/book/inspiration_fragment.dart';
 
 /// ── ZIP 备份 & 恢复引擎 ───────────────────────────────
 /// 依赖 BooksMixin.getAllBooks() — 确保 DatabaseService 同时 with BooksMixin

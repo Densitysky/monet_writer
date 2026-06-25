@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/ai_config.dart';
+import 'package:monet_writer/models/ai/ai_config.dart';
 import 'package:monet_writer/services/database_service.dart';
 
 class AiService {

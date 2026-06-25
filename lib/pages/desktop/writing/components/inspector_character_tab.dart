@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
-import 'package:monet_writer/models/character.dart';
-import 'package:monet_writer/models/character_group.dart';
+import 'package:monet_writer/models/character/character.dart';
+import 'package:monet_writer/models/character/character_group.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/services/ai_service.dart';

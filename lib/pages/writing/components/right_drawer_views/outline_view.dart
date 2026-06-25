@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
-import 'package:monet_writer/models/custom_outline.dart';
-import 'package:monet_writer/models/outline_tab.dart';
-import 'package:monet_writer/models/outline_node.dart';
+import 'package:monet_writer/models/outline/custom_outline.dart';
+import 'package:monet_writer/models/outline/outline_tab.dart';
+import 'package:monet_writer/models/outline/outline_node.dart';
 import 'package:monet_writer/services/ai_service.dart';
 
 import 'package:monet_writer/utils/markdown_text_editing_controller.dart';

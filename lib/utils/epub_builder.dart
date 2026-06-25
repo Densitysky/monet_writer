@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive.dart';
-import 'package:monet_writer/models/book.dart';
-import 'package:monet_writer/models/chapter.dart';
+import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/models/book/chapter.dart';
 import 'package:path/path.dart' as p;
 
 class EpubBuilder {

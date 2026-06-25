@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';

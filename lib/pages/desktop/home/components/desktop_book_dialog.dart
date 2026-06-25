@@ -5,7 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
-import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';

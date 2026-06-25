@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
-import 'package:monet_writer/models/book.dart';
-import 'package:monet_writer/models/chapter.dart';
+import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/models/book/chapter.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/utils/epub_builder.dart'; // 【引入 EpubBuilder】
 

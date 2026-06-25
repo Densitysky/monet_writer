@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:monet_writer/models/prompt_template.dart';
+import 'package:monet_writer/models/ai/prompt_template.dart';
 import 'package:monet_writer/services/prompt_manager.dart';
 import 'package:monet_writer/utils/monet_animations.dart';
 

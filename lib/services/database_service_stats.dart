@@ -1,7 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:intl/intl.dart';
-import 'package:monet_writer/models/book.dart';
-import 'package:monet_writer/models/daily_stats.dart';
+import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/models/book/daily_stats.dart';
 
 /// ── 每日写作统计 ──────────────────────────────────────
 

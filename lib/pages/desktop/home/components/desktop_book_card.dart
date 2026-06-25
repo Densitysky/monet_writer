@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/services/export_service.dart';
 import 'package:monet_writer/providers/theme_provider.dart';

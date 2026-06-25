@@ -4,7 +4,7 @@ import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart'; // 【新增】
 import 'package:monet_writer/providers/theme_provider.dart'; // 【新增】
 import 'package:monet_writer/services/database_service.dart';
-import 'package:monet_writer/models/ai_config.dart';
+import 'package:monet_writer/models/ai/ai_config.dart';
 
 enum _AiStatus { input, loading, success }
 

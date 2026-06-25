@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart'; // 【新增】引入主题引擎
 import 'package:monet_writer/providers/writing_provider.dart';
-import 'package:monet_writer/models/trashed_chapter.dart';
+import 'package:monet_writer/models/book/trashed_chapter.dart';
 
 class TrashBottomSheet extends StatefulWidget {
   final WritingProvider provider;

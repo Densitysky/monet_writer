@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/chapter_history.dart';
+import 'package:monet_writer/models/book/chapter_history.dart';
 
 /// ── 章节历史快照 ──────────────────────────────────────
 

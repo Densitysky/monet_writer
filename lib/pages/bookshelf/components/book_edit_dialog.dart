@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/widgets/monet_text_field.dart'; // 【引入新组件】
 

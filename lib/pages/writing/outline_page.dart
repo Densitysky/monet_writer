@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/book.dart';
-import 'package:monet_writer/models/chapter.dart';
-import 'package:monet_writer/models/custom_outline.dart'; // 引入自定义大纲模型
+import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/models/book/chapter.dart';
+import 'package:monet_writer/models/outline/custom_outline.dart'; // 引入自定义大纲模型
 import 'package:monet_writer/services/database_service.dart';
 
 class OutlinePage extends StatefulWidget {

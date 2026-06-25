@@ -15,17 +15,8 @@ class DesktopColorPickerPanel extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final currentSeed = themeProvider.seedColor;
 
-    final List<Color> colors = [
-      Colors.red, Colors.pink, Colors.purple, Colors.deepPurple,
-      Colors.indigo, Colors.blue, Colors.lightBlue, Colors.cyan,
-      Colors.teal, Colors.green, Colors.orange, Colors.deepOrange,
-      const Color(0xFFE2B2B1), const Color(0xFFB3928B), const Color(0xFF91807A), const Color(0xFFC4CBD8),
-      const Color(0xFFA5B2C1), const Color(0xFF9EA4AF), const Color(0xFFB5C4B1), const Color(0xFF8B968D),
-      const Color(0xFFD4C4B7), const Color(0xFFE8D3C3), const Color(0xFFD9D0C1), const Color(0xFFB4A992),
-      const Color(0xFF2C3E50), const Color(0xFF1A5276), const Color(0xFF117A65), const Color(0xFF196F3D),
-      const Color(0xFF7D6608), const Color(0xFF935116), const Color(0xFF7B241C), const Color(0xFF512E5F),
-      const Color(0xFF4A235A), const Color(0xFF154360), const Color(0xFF424949), const Color(0xFF1B2631),
-    ];
+    // 金律 24 色色盘 — 与移动端完全一致
+    final List<Color> colors = ThemeProvider.goldenAngleColors;
 
     return Wrap(
       spacing: 16, runSpacing: 16,

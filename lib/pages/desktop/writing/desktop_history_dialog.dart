@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:isar/isar.dart';
 import 'package:intl/intl.dart';
 
-import 'package:monet_writer/models/chapter_history.dart';
+import 'package:monet_writer/models/book/chapter_history.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/providers/writing_provider.dart';

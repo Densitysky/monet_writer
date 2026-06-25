@@ -3,12 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:palette_generator/palette_generator.dart';
-import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/pages/writing/writing_page.dart';
 import 'package:monet_writer/services/export_service.dart';
 import 'package:monet_writer/pages/bookshelf/components/book_edit_dialog.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/widgets/monet_book_cover.dart';
+import 'package:monet_writer/utils/color_utils.dart';
 
 class HeroBookCard extends StatefulWidget {
   final Book book;
@@ -61,6 +62,11 @@ class _HeroBookCardState extends State<HeroBookCard> {
     final theme = Theme.of(context);
     final primaryColor = _themeColor ?? theme.colorScheme.primary;
     final bool hasCover = widget.book.coverPath != null && File(widget.book.coverPath!).existsSync();
+    final overlayWhite = hasCover ? Colors.white : contrastTextColor(primaryColor);
+    // 按钮使用相反极性：overlay 为浅色时按钮浅底深字，反之为深底浅字
+    final isOverlayLight = overlayWhite.computeLuminance() > 0.5;
+    final buttonBg = overlayWhite;
+    final buttonFg = isOverlayLight ? Colors.black87 : Colors.white70;
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -119,19 +125,19 @@ class _HeroBookCardState extends State<HeroBookCard> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: overlayWhite.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.history_edu, size: 14, color: Colors.white),
-                            SizedBox(width: 4),
-                            Text('最近阅读', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                            Icon(Icons.history_edu, size: 14, color: overlayWhite),
+                            const SizedBox(width: 4),
+                            Text('最近阅读', style: TextStyle(color: overlayWhite, fontWeight: FontWeight.bold, fontSize: 12)),
                           ],
                         ),
                       ),
                       const Spacer(),
-                      const Icon(Icons.arrow_forward, size: 18, color: Colors.white70),
+                      Icon(Icons.arrow_forward, size: 18, color: overlayWhite.withValues(alpha: 0.7)),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -156,19 +162,19 @@ class _HeroBookCardState extends State<HeroBookCard> {
                           children: [
                             Text(
                               widget.book.title,
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, height: 1.2),
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: overlayWhite, height: 1.2),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
                             Text(
                               '上次更新：${DateFormat('MM-dd HH:mm').format(widget.book.updatedAt)}',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+                              style: TextStyle(color: overlayWhite.withValues(alpha: 0.8), fontSize: 13),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '${widget.book.wordCount} 字',
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: overlayWhite, fontSize: 13, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -192,8 +198,8 @@ class _HeroBookCardState extends State<HeroBookCard> {
                           icon: const Icon(Icons.edit_note),
                           label: const Text('继续写作'),
                           style: FilledButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black87,
+                            backgroundColor: buttonBg,
+                            foregroundColor: buttonFg,
                             elevation: 0,
                           ),
                         ),
@@ -203,8 +209,8 @@ class _HeroBookCardState extends State<HeroBookCard> {
                         onPressed: () => _showEditPanel(context),
                         icon: const Icon(Icons.more_horiz),
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          foregroundColor: Colors.white,
+                          backgroundColor: overlayWhite.withValues(alpha: 0.2),
+                          foregroundColor: overlayWhite,
                         ),
                       ),
                     ],

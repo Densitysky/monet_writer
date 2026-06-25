@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:monet_writer/models/book.dart'; // 【新增】引入 Book 模型
+import 'package:monet_writer/models/book/book.dart'; // 【新增】引入 Book 模型
 import 'package:monet_writer/utils/color_generator.dart';
 
 class MonetBookCover extends StatelessWidget {

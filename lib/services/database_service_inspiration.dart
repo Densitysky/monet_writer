@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'package:monet_writer/models/inspiration_fragment.dart';
+import 'package:monet_writer/models/book/inspiration_fragment.dart';
 
 /// ── 灵感碎片 ──────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:monet_writer/models/book.dart';
+import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/pages/writing/writing_page.dart';
 import 'package:monet_writer/services/export_service.dart';
 import 'package:monet_writer/pages/bookshelf/components/book_edit_dialog.dart';

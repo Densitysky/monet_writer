@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:palette_generator/palette_generator.dart';
-import 'package:monet_writer/models/character.dart';
+import 'package:monet_writer/models/character/character.dart';
 
 class CharacterCard extends StatefulWidget {
   final Character character;

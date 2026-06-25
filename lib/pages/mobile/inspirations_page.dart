@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/inspirations_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
+import 'package:monet_writer/utils/inspiration_tag_colors.dart';
 
 /// 移动端灵感碎片页面
 class InspirationsPage extends StatefulWidget {
@@ -133,7 +134,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
     Color hintColor,
     bool isDark,
   ) {
-    final tagInfo = _getTagColor(fragment.tag);
+    final tagInfo = getInspirationTagColor(fragment.tag);
     return GestureDetector(
       onTap: () => _showRecordSheet(context, provider, fragment: fragment),
       child: Container(
@@ -324,7 +325,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                           .where((t) => t != '全部')
                           .map((tag) {
                         final isSelected = selectedTag == tag;
-                        final tagInfo = _getTagColor(tag);
+                        final tagInfo = getInspirationTagColor(tag);
                         return GestureDetector(
                           onTap: () => setSheetState(() => selectedTag = tag),
                           child: Container(
@@ -434,17 +435,6 @@ class _InspirationsPageState extends State<InspirationsPage> {
       context: context,
       delegate: _InspirationSearchDelegate(provider),
     );
-  }
-
-  (Color, Color) _getTagColor(String tag) {
-    switch (tag) {
-      case '角色': return (const Color(0xFFE6F1FB), const Color(0xFF185FA5));
-      case '情节': return (const Color(0xFFE6F1FB), const Color(0xFF185FA5));
-      case '场景': return (const Color(0xFFFBEAF0), const Color(0xFF993556));
-      case '金句': return (const Color(0xFFE1F5EE), const Color(0xFF0F6E56));
-      case '世界观': return (const Color(0xFFFAEEDA), const Color(0xFFBA7517));
-      default: return (const Color(0xFFF1EFE8), const Color(0xFF5F5E5A));
-    }
   }
 
   String _formatTime(DateTime dt) {

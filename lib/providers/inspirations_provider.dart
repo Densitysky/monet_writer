@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:monet_writer/services/database_service.dart';
-import 'package:monet_writer/models/inspiration_fragment.dart';
+import 'package:monet_writer/models/book/inspiration_fragment.dart';
 
 /// 灵感碎片数据模型 (纯内存)
 class InspirationItem {

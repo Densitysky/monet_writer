@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/services/ai_service.dart';
-import 'package:monet_writer/models/ai_config.dart';
+import 'package:monet_writer/models/ai/ai_config.dart';
 
 class AiConfigPage extends StatefulWidget {
   const AiConfigPage({super.key});

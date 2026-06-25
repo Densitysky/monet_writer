@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart'; // 【新增】引入主题引擎
 import 'package:monet_writer/providers/writing_provider.dart';
-import 'package:monet_writer/models/chapter_history.dart';
+import 'package:monet_writer/models/book/chapter_history.dart';
 import 'package:monet_writer/services/database_service.dart';
 
 class HistoryBottomSheet extends StatefulWidget {
