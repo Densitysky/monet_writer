@@ -72,33 +72,27 @@ class _SplashPageState extends State<SplashPage>
   }
 
   Widget _buildIcon() {
+    // 使用与 App 图标一致的 Monet 水彩图标
     return Container(
       width: 120,
       height: 120,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF5C6BC0),
-            Color(0xFF7E57C2),
-            Color(0xFFAB47BC),
-          ],
-        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5C6BC0).withValues(alpha: 0.4),
+            color: const Color(0xFF3A7CA5).withValues(alpha: 0.25),
             blurRadius: 30,
             offset: const Offset(0, 12),
           ),
         ],
       ),
-      child: const Center(
-        child: Icon(
-          Icons.edit_note_rounded,
-          size: 64,
-          color: Colors.white,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Image.asset(
+          'assets/icons/app_icon.png',
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
         ),
       ),
     );
@@ -113,73 +107,71 @@ class _SplashPageState extends State<SplashPage>
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 图标区域
-                Opacity(
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // 图标固定居中 — 与原生启动图位置一致
+              Center(
+                child: Opacity(
                   opacity: _fadeAnim.value,
                   child: Transform.scale(
                     scale: _scaleAnim.value,
                     child: child,
                   ),
                 ),
-                const SizedBox(height: 36),
-
-                // 品牌名称
-                FadeTransition(
+              ),
+              // 品牌文字和加载指示器 — 在图标上方(偏移后视觉上在下方)
+              Positioned(
+                top: MediaQuery.sizeOf(context).height * 0.5 + 84,
+                left: 0,
+                right: 0,
+                child: FadeTransition(
                   opacity: _textFadeAnim,
-                  child: Text(
-                    '落笔',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: textColor,
-                      letterSpacing: 6,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // 副标题
-                FadeTransition(
-                  opacity: _textFadeAnim,
-                  child: Text(
-                    'Monet Writer',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: textColor.withValues(alpha: 0.45),
-                      letterSpacing: 3,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 52),
-
-                // 加载指示器
-                FadeTransition(
-                  opacity: _textFadeAnim,
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        textColor.withValues(alpha: 0.25),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '落笔',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: textColor,
+                          letterSpacing: 6,
+                          height: 1.2,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Monet Writer',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: textColor.withValues(alpha: 0.45),
+                          letterSpacing: 3,
+                        ),
+                      ),
+                      const SizedBox(height: 52),
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            textColor.withValues(alpha: 0.25),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            );
-          },
-          child: _buildIcon(),
-        ),
+              ),
+            ],
+          );
+        },
+        child: _buildIcon(),
       ),
     );
   }

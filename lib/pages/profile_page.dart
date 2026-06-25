@@ -98,10 +98,10 @@ class _ProfileHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (!isFlat)
-                Column(
+                const Column(
                     children: [
-                      const SizedBox(height: 12),
-                      Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.dividerColor, borderRadius: BorderRadius.circular(2))),
+                      SizedBox(height: 12),
+                      _HandleBar(),
                     ]
                 ),
               const Padding(
@@ -156,7 +156,6 @@ class _ProfileHeader extends StatelessWidget {
             IOSUiSettings(title: '裁切封面', aspectRatioLockEnabled: true, resetAspectRatioEnabled: false),
           ],
         );
-
         if (croppedFile != null) {
           final directory = await getApplicationDocumentsDirectory();
           final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -390,7 +389,6 @@ class _GridItem extends StatelessWidget {
       child: Container(
         width: 100,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        // 【已修改】彻底移除了多余的 Border 和底色，回归纯净的扁平留白
         child: Column(
           children: [
             Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
@@ -400,5 +398,13 @@ class _GridItem extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _HandleBar extends StatelessWidget {
+  const _HandleBar();
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 40, height: 4, decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)));
   }
 }

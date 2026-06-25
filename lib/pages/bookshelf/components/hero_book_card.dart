@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:ui'; // 引入 ImageFilter
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -9,7 +9,6 @@ import 'package:monet_writer/services/export_service.dart';
 import 'package:monet_writer/pages/bookshelf/components/book_edit_dialog.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/widgets/monet_book_cover.dart';
-import 'package:monet_writer/utils/monet_animations.dart';
 
 class HeroBookCard extends StatefulWidget {
   final Book book;
@@ -61,8 +60,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = _themeColor ?? theme.colorScheme.primary;
-
-    // 判断是否有封面用于背景
     final bool hasCover = widget.book.coverPath != null && File(widget.book.coverPath!).existsSync();
 
     return Card(
@@ -70,12 +67,12 @@ class _HeroBookCardState extends State<HeroBookCard> {
       elevation: 6,
       shadowColor: primaryColor.withValues(alpha: 0.4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      clipBehavior: Clip.antiAlias, // 裁剪背景
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           Navigator.push(
             context,
-            MonetPageRoute(builder: (_) => WritingPage(
+            MaterialPageRoute(builder: (_) => WritingPage(
               book: widget.book,
               initialChapterIndex: -1,
             )),
@@ -83,7 +80,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
         },
         child: Stack(
           children: [
-            // 1. 背景层 (如果有封面，显示模糊封面；否则显示纯色)
             Positioned.fill(
               child: hasCover
                   ? Image.file(
@@ -92,8 +88,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
               )
                   : Container(color: theme.colorScheme.primaryContainer),
             ),
-
-            // 2. 模糊滤镜 (仅当有封面时)
             if (hasCover)
               Positioned.fill(
                 child: BackdropFilter(
@@ -101,8 +95,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
                   child: Container(color: Colors.black.withValues(alpha: 0.2)),
                 ),
               ),
-
-            // 3. 渐变遮罩 (增强文字可读性)
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -117,8 +109,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
                 ),
               ),
             ),
-
-            // 4. 内容层
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -148,7 +138,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 封面
                       Hero(
                         tag: 'book_cover_${widget.book.id}',
                         child: Container(
@@ -161,7 +150,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
                         ),
                       ),
                       const SizedBox(width: 20),
-                      // 信息
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +176,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // 底部按钮栏
                   Row(
                     children: [
                       Expanded(
@@ -196,7 +183,7 @@ class _HeroBookCardState extends State<HeroBookCard> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MonetPageRoute(builder: (_) => WritingPage(
+                              MaterialPageRoute(builder: (_) => WritingPage(
                                 book: widget.book,
                                 initialChapterIndex: -1,
                               )),
@@ -231,7 +218,6 @@ class _HeroBookCardState extends State<HeroBookCard> {
     );
   }
 
-  // ... (保留原本的 _showEditPanel 和 _showDeleteConfirm 方法) ...
   void _showEditPanel(BuildContext context) {
     showModalBottomSheet(
       context: context,

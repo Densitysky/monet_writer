@@ -6,7 +6,6 @@ import 'package:monet_writer/services/export_service.dart';
 import 'package:monet_writer/pages/bookshelf/components/book_edit_dialog.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/widgets/monet_book_cover.dart';
-import 'package:monet_writer/utils/monet_animations.dart';
 
 class BookCard extends StatelessWidget {
   final Book book;
@@ -28,9 +27,8 @@ class BookCard extends StatelessWidget {
         onTap: () {
           Navigator.push(
             context,
-            MonetPageRoute(builder: (_) => WritingPage(
+            MaterialPageRoute(builder: (_) => WritingPage(
               book: book,
-              // 【修复】传入 -1，表示由 WritingPage 自动决定跳转到上次阅读的位置
               initialChapterIndex: -1,
             )),
           );
@@ -40,10 +38,8 @@ class BookCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 封面
               MonetBookCover(book: book, width: 60, height: 80),
               const SizedBox(width: 16),
-              // 信息区域
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +65,6 @@ class BookCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // 更多操作菜单
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
                 onSelected: (value) {
