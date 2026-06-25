@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
-import 'package:monet_writer/providers/user_provider.dart';
-import 'package:monet_writer/providers/theme_provider.dart';
+import 'package:monet_writer/utils/provider_select_ext.dart';
 
 /// 自定义文本选择控制器
 class MonetSelectionControls extends MaterialTextSelectionControls {
@@ -92,14 +90,14 @@ class _MonetToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double toolbarHeight = 44.0;
+    const double toolbarHeight = 44.0;
     final Offset anchor = Offset(
       selectionMidpoint.dx,
       (selectionMidpoint.dy - textLineHeight - toolbarHeight).clamp(20.0, double.infinity),
     );
 
-    final currentTheme = context.watch<UserProvider>().currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final currentTheme = context.selectCurrentTheme;
+    final isFlat = context.selectIsFlat;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     // 气泡底色与文字颜色

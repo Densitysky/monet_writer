@@ -208,11 +208,11 @@ class WritingDrawer extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)), // 【动态圆角】
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.orangeAccent, size: 24),
-            const SizedBox(width: 8),
-            const Text('移入废纸篓'),
+            Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.orangeAccent, size: 24),
+            SizedBox(width: 8),
+            Text('移入废纸篓'),
           ],
         ),
         content: Text('确定要将《${chapter.title}》移入废纸篓吗？\n\n(您随时可以在底部废纸篓中将其恢复)'),

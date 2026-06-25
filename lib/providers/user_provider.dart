@@ -2,8 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:file_picker/file_picker.dart';
@@ -281,8 +279,11 @@ class UserProvider extends ChangeNotifier {
   Future<void> setBackgroundImage(String? path) async {
     _backgroundPath = path;
     final prefs = await SharedPreferences.getInstance();
-    if (path == null) await prefs.remove('user_bg_path');
-    else await prefs.setString('user_bg_path', path);
+    if (path == null) {
+      await prefs.remove('user_bg_path');
+    } else {
+      await prefs.setString('user_bg_path', path);
+    }
     notifyListeners();
   }
 

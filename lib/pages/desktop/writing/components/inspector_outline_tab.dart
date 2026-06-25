@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
-import 'package:monet_writer/models/outline/outline_node.dart';
 import 'package:monet_writer/models/outline/outline_tab.dart';
 import 'package:monet_writer/services/ai_service.dart';
 
@@ -31,7 +30,7 @@ class _InspectorOutlineTabState extends State<InspectorOutlineTab> {
 
   Future<void> _handleExtractOutline(BuildContext context, WritingProvider provider) async {
     final aiProvider = context.read<AiProvider>();
-    if (aiProvider.config.apiKey?.isEmpty ?? true) {
+    if (aiProvider.config.apiKey.isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请先在全局设置中配置 AI API Key')));
       return;
     }

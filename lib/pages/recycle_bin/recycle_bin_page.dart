@@ -143,10 +143,11 @@ class _DeletedBookItem extends StatelessWidget {
   }
 
   void _handleRestore(BuildContext context) async {
-    await DatabaseService().restoreBook(book.id);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('书籍已恢复到书架')));
-    }
+    final ok = await DatabaseService().restoreBook(book.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(ok ? '书籍已恢复到书架' : '恢复失败，请重试'),
+    ));
   }
 
   void _handleDeleteForever(BuildContext context) {
@@ -163,8 +164,12 @@ class _DeletedBookItem extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
-              Navigator.pop(ctx); // 关弹窗
-              await DatabaseService().deleteBookPermanently(book.id);
+              Navigator.pop(ctx);
+              final ok = await DatabaseService().deleteBookPermanently(book.id);
+              if (!ctx.mounted) return;
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text(ok ? '已彻底删除' : '删除失败，请重试'),
+              ));
             },
             child: const Text('彻底粉碎'),
           ),

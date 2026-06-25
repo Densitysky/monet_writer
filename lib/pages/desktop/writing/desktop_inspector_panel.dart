@@ -79,7 +79,7 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
 
     try {
       final aiProvider = context.read<AiProvider>();
-      if (aiProvider.config.apiKey?.isEmpty ?? true) {
+      if (aiProvider.config.apiKey.isEmpty ?? true) {
         throw Exception('请先在全局设置中配置 AI API Key');
       }
 

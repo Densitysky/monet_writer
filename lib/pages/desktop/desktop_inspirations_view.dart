@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/inspirations_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';

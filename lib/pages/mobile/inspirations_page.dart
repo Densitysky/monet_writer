@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/inspirations_provider.dart';
-import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/utils/inspiration_tag_colors.dart';
+import 'package:monet_writer/utils/app_strings.dart';
 
 /// 移动端灵感碎片页面
 class InspirationsPage extends StatefulWidget {
@@ -31,9 +31,13 @@ class _InspirationsPageState extends State<InspirationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<InspirationsProvider>();
+    // 仅碎片列表和标签变化时重建，避免搜索/编辑触发整页刷新
+    final fragments = context.select<InspirationsProvider, List<InspirationItem>>(
+      (p) => List.unmodifiable(p.filteredFragments),
+    );
+    final activeTag = context.select<InspirationsProvider, String>((p) => p.activeTag);
+    final provider = context.read<InspirationsProvider>();
     final theme = Theme.of(context);
-    final fragments = provider.filteredFragments;
     final textColor = theme.colorScheme.onSurface;
     final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.5);
     final hintColor = theme.colorScheme.onSurface.withValues(alpha: 0.25);
@@ -44,7 +48,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('灵感碎片'),
+        title: const Text(AppStrings.inspirations),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -208,9 +212,9 @@ class _InspirationsPageState extends State<InspirationsPage> {
         children: [
           Icon(Icons.lightbulb_outline, size: 48, color: hintColor),
           const SizedBox(height: 12),
-          Text('还没有灵感碎片', style: TextStyle(fontSize: 14, color: textColor.withValues(alpha: 0.4))),
+          Text(AppStrings.noInspirations, style: TextStyle(fontSize: 14, color: textColor.withValues(alpha: 0.4))),
           const SizedBox(height: 4),
-          Text('点击右下角 + 记录第一条灵感', style: TextStyle(fontSize: 13, color: hintColor)),
+          Text(AppStrings.noInspirationsHint, style: TextStyle(fontSize: 13, color: hintColor)),
         ],
       ),
     );
@@ -263,7 +267,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      isEditing ? '编辑灵感' : '记录灵感',
+                      isEditing ? AppStrings.editInspiration : AppStrings.recordInspiration,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -283,7 +287,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                         height: 1.5,
                       ),
                       decoration: InputDecoration(
-                        hintText: '写下灵感...',
+                        hintText: AppStrings.writeInspiration,
                         hintStyle: TextStyle(
                           color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.3),
                           fontSize: 14,
@@ -303,7 +307,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                       maxLines: 2,
                       style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurface),
                       decoration: InputDecoration(
-                        hintText: '补充说明 (可选)',
+                        hintText: AppStrings.supplementaryNote,
                         hintStyle: TextStyle(
                           color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.25),
                           fontSize: 13,
@@ -355,7 +359,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                     // 关联书籍
                     TextField(
                       decoration: InputDecoration(
-                        hintText: '关联作品 (可选)',
+                        hintText: AppStrings.linkToBook,
                         hintStyle: TextStyle(
                           color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.25),
                           fontSize: 13,
@@ -382,7 +386,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                               provider.deleteFragment(fragment.id!);
                               Navigator.pop(ctx);
                             },
-                            child: const Text('删除', style: TextStyle(color: Colors.redAccent)),
+                            child: const Text(AppStrings.delete, style: TextStyle(color: Colors.redAccent)),
                           ),
                         const Spacer(),
                         TextButton(
@@ -416,7 +420,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                             }
                             Navigator.pop(ctx);
                           },
-                          child: Text(isEditing ? '保存' : '记录'),
+                          child: Text(isEditing ? AppStrings.save : AppStrings.record),
                         ),
                       ],
                     ),

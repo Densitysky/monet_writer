@@ -80,9 +80,9 @@ class DesktopChapterPanel extends StatelessWidget {
           child: Row(children: [Icon(CupertinoIcons.share, size: 18, color: theme.textColor), const SizedBox(width: 8), Text('导出本章 TXT', style: TextStyle(color: theme.textColor))]),
         ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'delete',
-          child: Row(children: [const Icon(CupertinoIcons.trash, size: 18, color: Colors.redAccent), const SizedBox(width: 8), const Text('移至废纸篓', style: TextStyle(color: Colors.redAccent))]),
+          child: Row(children: [Icon(CupertinoIcons.trash, size: 18, color: Colors.redAccent), SizedBox(width: 8), Text('移至废纸篓', style: TextStyle(color: Colors.redAccent))]),
         ),
       ],
     );
@@ -234,8 +234,9 @@ class _DesktopChapterTileState extends State<_DesktopChapterTile> {
     final textColor = widget.isSelected ? activeColor : inactiveColor;
 
     Color backgroundColor = Colors.transparent;
-    if (widget.isSelected) backgroundColor = activeColor.withValues(alpha: widget.isFlat ? 0.08 : 0.12);
-    else if (_isHovered) backgroundColor = widget.currentTheme.textColor.withValues(alpha: 0.04);
+    if (widget.isSelected) {
+      backgroundColor = activeColor.withValues(alpha: widget.isFlat ? 0.08 : 0.12);
+    } else if (_isHovered) backgroundColor = widget.currentTheme.textColor.withValues(alpha: 0.04);
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: widget.isFlat ? 8.0 : 12.0, vertical: 2.0),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:isar/isar.dart';
-import 'package:intl/intl.dart';
 
 import 'package:monet_writer/models/book/chapter_history.dart';
 import 'package:monet_writer/providers/theme_provider.dart';

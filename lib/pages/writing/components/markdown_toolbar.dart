@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:monet_writer/providers/user_provider.dart';
-import 'package:monet_writer/providers/theme_provider.dart';
+import 'package:monet_writer/utils/provider_select_ext.dart';
 import 'package:monet_writer/utils/monet_animations.dart';
 
 class MarkdownToolbar extends StatelessWidget {
@@ -46,8 +44,8 @@ class MarkdownToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currentTheme = context.watch<UserProvider>().currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final currentTheme = context.selectCurrentTheme;
+    final isFlat = context.selectIsFlat;
 
     return Container(
       height: 40,

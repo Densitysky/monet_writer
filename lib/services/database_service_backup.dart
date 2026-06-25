@@ -79,10 +79,8 @@ mixin BackupMixin {
 
     // 4. 压缩落盘
     final zipBytes = ZipEncoder().encode(archive);
-    if (zipBytes != null) {
-      await File(zipFilePath).writeAsBytes(zipBytes);
+    await File(zipFilePath).writeAsBytes(zipBytes);
     }
-  }
 
   /// 解压 ZIP 并导入数据（含路径重写）
   Future<void> importDataFromZip(String zipFilePath) async {
@@ -186,7 +184,7 @@ mixin BackupMixin {
         } else if (value is bool) {
           await prefs.setBool(key, value);
         } else if (value is List) {
-          await prefs.setStringList(key, (value as List).cast<String>());
+          await prefs.setStringList(key, (value).cast<String>());
         }
       }
     }

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -16,7 +15,7 @@ class DesktopColorPickerPanel extends StatelessWidget {
     final currentSeed = themeProvider.seedColor;
 
     // 金律 24 色色盘 — 与移动端完全一致
-    final List<Color> colors = ThemeProvider.goldenAngleColors;
+    const List<Color> colors = ThemeProvider.goldenAngleColors;
 
     return Wrap(
       spacing: 16, runSpacing: 16,

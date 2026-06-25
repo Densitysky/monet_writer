@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 
@@ -16,7 +15,7 @@ class _TitleSystemDialogState extends State<TitleSystemDialog> {
   late List<String> _customTitles;
   final List<TextEditingController> _controllers = [];
   final _scrollController = ScrollController();
-  int _hoveredCard = -1;
+  final int _hoveredCard = -1;
 
   static const limits = [
     '0-1万字', '1-5万字', '5-15万字', '15-50万字',
@@ -182,7 +181,7 @@ class _TitleSystemDialogState extends State<TitleSystemDialog> {
   }
 
   Widget _buildSystemCards(Color primary, Color muted, Color surface, Color text) {
-    final systems = UserProvider.systemInfo;
+    const systems = UserProvider.systemInfo;
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;

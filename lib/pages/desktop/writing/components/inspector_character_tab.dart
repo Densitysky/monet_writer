@@ -32,7 +32,7 @@ class _InspectorCharacterTabState extends State<InspectorCharacterTab> {
 
   Future<void> _handleExtract(BuildContext context, WritingProvider provider) async {
     final aiProvider = context.read<AiProvider>();
-    if (aiProvider.config.apiKey?.isEmpty ?? true) {
+    if (aiProvider.config.apiKey.isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请先在全局设置中配置 AI API Key')));
       return;
     }

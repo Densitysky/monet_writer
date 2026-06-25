@@ -27,7 +27,7 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
   int _totalBooks = 0;
   int _totalWords = 0;
   int _todayWords = 0;
-  int _writingDays = 1;
+  final int _writingDays = 1;
 
   final List<int> _weeklyData = [2400, 1200, 4500, 0, 3100, 5200, 800];
   final List<String> _weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];

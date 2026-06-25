@@ -258,14 +258,14 @@ class _BouncingWidgetState extends State<BouncingWidget>
     if (widget.haptic) HapticFeedback.selectionClick();
     _controller
       ..value = 0
-      ..animateTo(1, curve: Interval(0, 0.5, curve: MonetCurves.press));
+      ..animateTo(1, curve: const Interval(0, 0.5, curve: MonetCurves.press));
     setState(() {
       _scale = Tween<double>(
         begin: 1.0,
         end: widget.scaleFactor,
       ).animate(CurvedAnimation(
         parent: _controller,
-        curve: Interval(0, 0.5, curve: MonetCurves.press),
+        curve: const Interval(0, 0.5, curve: MonetCurves.press),
       ));
     });
   }
@@ -276,7 +276,7 @@ class _BouncingWidgetState extends State<BouncingWidget>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Interval(0.5, 1, curve: MonetCurves.press),
+      curve: const Interval(0.5, 1, curve: MonetCurves.press),
     ));
     _controller.forward().then((_) {
       widget.onTap();

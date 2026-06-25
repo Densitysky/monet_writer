@@ -74,7 +74,7 @@ class AiService {
 
   static Future<List<String>> _fetchGeminiModels(AiConfig config) async {
     // 【修复】使用加号拼接，避免被编辑器误识别为超链接格式
-    final url = '[https://generativelanguage.googleapis.com/v1beta/models?key=](https://generativelanguage.googleapis.com/v1beta/models?key=)' + config.apiKey;
+    final url = '[https://generativelanguage.googleapis.com/v1beta/models?key=](https://generativelanguage.googleapis.com/v1beta/models?key=)${config.apiKey}';
     final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
@@ -110,7 +110,7 @@ class AiService {
   static Future<String> _callGemini(AiConfig config, String sys, String user) async {
     final model = config.modelName.isEmpty ? 'gemini-pro' : config.modelName;
     // 【修复】使用加号拼接，避免超链接识别问题
-    final url = '[https://generativelanguage.googleapis.com/v1beta/models/](https://generativelanguage.googleapis.com/v1beta/models/)' + model + ':generateContent?key=' + config.apiKey;
+    final url = '[https://generativelanguage.googleapis.com/v1beta/models/](https://generativelanguage.googleapis.com/v1beta/models/)$model:generateContent?key=${config.apiKey}';
 
     final response = await http.post(
       Uri.parse(url),

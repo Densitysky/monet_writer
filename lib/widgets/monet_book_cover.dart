@@ -67,7 +67,7 @@ class MonetBookCover extends StatelessWidget {
 
     if (hasImage) {
       return Image.file(
-        File(path!),
+        File(path),
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _buildPlaceholder(displayTitle),
       );

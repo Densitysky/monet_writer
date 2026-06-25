@@ -9,15 +9,25 @@ mixin AiMixin {
   Future<List<AiConfig>> getAllAiConfigs() async =>
       await isar.aiConfigs.where().findAll();
 
-  Future<void> saveAiConfig(AiConfig config) async {
-    await isar.writeTxn(() async {
-      await isar.aiConfigs.put(config);
-    });
+  Future<bool> saveAiConfig(AiConfig config) async {
+    try {
+      await isar.writeTxn(() async {
+        await isar.aiConfigs.put(config);
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
-  Future<void> deleteAiConfig(int id) async {
-    await isar.writeTxn(() async {
-      await isar.aiConfigs.delete(id);
-    });
+  Future<bool> deleteAiConfig(int id) async {
+    try {
+      await isar.writeTxn(() async {
+        await isar.aiConfigs.delete(id);
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

@@ -115,6 +115,6 @@ $contentHtml
 
     // 4. 打包
     final encoder = ZipEncoder();
-    return encoder.encode(archive)!;
+    return encoder.encode(archive);
   }
 }

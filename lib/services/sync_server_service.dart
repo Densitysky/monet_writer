@@ -7,7 +7,6 @@ import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:isar/isar.dart';
 import 'package:monet_writer/services/database_service.dart';
 
 class SyncServerService {

@@ -137,7 +137,9 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
 
     int start = 0;
     int minLen = math.min(oldText.length, newText.length);
-    while (start < minLen && oldText[start] == newText[start]) start++;
+    while (start < minLen && oldText[start] == newText[start]) {
+      start++;
+    }
 
     int oldEnd = oldText.length - 1;
     int newEnd = newText.length - 1;

@@ -75,5 +75,6 @@ mixin WritingHistoryMixin on WritingProviderBase {
   }
 
   // 声明基类提供的抽象方法通道
+  @override
   Future<void> saveCurrentChapter();
 }

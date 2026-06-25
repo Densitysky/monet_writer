@@ -81,13 +81,13 @@ class _DesktopWritingWorkspaceState extends State<_DesktopWritingWorkspace> {
                     curve: Curves.easeInOutCubic,
                     width: _showLeftPanel ? leftPanelWidth : 0,
                     decoration: BoxDecoration(color: isFlat ? currentTheme.backgroundColor : currentTheme.textColor.withValues(alpha: 0.02), border: isFlat ? Border(right: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.08), width: 1)) : null),
-                    child: ClipRect(
+                    child: const ClipRect(
                       // 【核心修复】：加上 OverflowBox，强行锁定内部布局宽度，杜绝收起时的溢出报错
                       child: OverflowBox(
                         alignment: Alignment.topLeft,
                         minWidth: leftPanelWidth,
                         maxWidth: leftPanelWidth,
-                        child: const DesktopChapterPanel(),
+                        child: DesktopChapterPanel(),
                       ),
                     ),
                   ),
@@ -121,13 +121,13 @@ class _DesktopWritingWorkspaceState extends State<_DesktopWritingWorkspace> {
                     curve: Curves.easeInOutCubic,
                     width: _showRightPanel ? rightPanelWidth : 0,
                     decoration: BoxDecoration(color: isFlat ? currentTheme.backgroundColor : currentTheme.textColor.withValues(alpha: 0.02), border: isFlat ? Border(left: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.08), width: 1)) : null),
-                    child: ClipRect(
+                    child: const ClipRect(
                       // 【核心修复】：加上 OverflowBox 锁定内部宽度
                       child: OverflowBox(
                         alignment: Alignment.topLeft,
                         minWidth: rightPanelWidth,
                         maxWidth: rightPanelWidth,
-                        child: const DesktopInspectorPanel(),
+                        child: DesktopInspectorPanel(),
                       ),
                     ),
                   ),

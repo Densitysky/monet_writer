@@ -10,7 +10,6 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:monet_writer/models/character/character.dart';
-import 'package:monet_writer/models/character/character_event.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';

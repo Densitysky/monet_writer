@@ -110,10 +110,11 @@ class _DesktopDeletedBookItem extends StatelessWidget {
 
   // 恢复书籍
   void _handleRestore(BuildContext context) async {
-    await DatabaseService().restoreBook(book.id);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ 书籍已恢复到书架')));
-    }
+    final ok = await DatabaseService().restoreBook(book.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(ok ? '✅ 书籍已恢复到书架' : '恢复失败，请重试'),
+    ));
   }
 
   // 彻底粉碎书籍
@@ -140,7 +141,11 @@ class _DesktopDeletedBookItem extends StatelessWidget {
             ),
             onPressed: () async {
               Navigator.pop(ctx);
-              await DatabaseService().deleteBookPermanently(book.id);
+              final ok = await DatabaseService().deleteBookPermanently(book.id);
+              if (!ctx.mounted) return;
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text(ok ? '已彻底删除' : '删除失败，请重试'),
+              ));
             },
             child: const Text('彻底粉碎'),
           ),

@@ -95,9 +95,9 @@ class _EdgeDrawerHandleState extends State<EdgeDrawerHandle>
                         color: _isHovering
                             ? handleColor
                             : widget.color.withValues(alpha: _pulseAnimation.value),
-                        borderRadius: BorderRadius.vertical(
-                          top: const Radius.circular(2),
-                          bottom: const Radius.circular(2),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(2),
+                          bottom: Radius.circular(2),
                         ),
                       ),
                     ),

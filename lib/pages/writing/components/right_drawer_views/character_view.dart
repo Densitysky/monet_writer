@@ -154,7 +154,7 @@ class _CharacterViewState extends State<CharacterView> {
   Widget _buildGroupItem(BuildContext context, WritingProvider provider, CharacterGroup group, int groupIndex, WritingTheme currentTheme, bool isFlat) {
     final theme = Theme.of(context);
     return DragTarget<Map<String, int?>>(
-      onWillAcceptWithDetails: (details) => details.data?['groupIndex'] != groupIndex,
+      onWillAcceptWithDetails: (details) => details.data['groupIndex'] != groupIndex,
       onAcceptWithDetails: (details) {
         final data = details.data;
         provider.moveCharacter(fromIndex: data['index']!, fromGroupIndex: data['groupIndex'], toGroupIndex: groupIndex);

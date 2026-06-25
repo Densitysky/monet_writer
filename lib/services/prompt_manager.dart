@@ -19,9 +19,7 @@ class PromptManager {
         .sceneCodeEqualTo(sceneCode)
         .findFirst();
 
-    if (template == null) {
-      template = await _initDefaultTemplate(sceneCode);
-    }
+    template ??= await _initDefaultTemplate(sceneCode);
 
     if (template.isAdvancedMode && template.fullOverride != null) {
       return template.fullOverride!;

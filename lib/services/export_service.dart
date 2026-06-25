@@ -32,7 +32,7 @@ class ExportService {
       final StringBuffer buffer = StringBuffer();
       buffer.writeln("《${book.title}》");
       buffer.writeln("作者：${book.authorName ?? '佚名'}");
-      buffer.writeln("\n" + ("=" * 20) + "\n");
+      buffer.writeln("\n${"=" * 20}\n");
 
       for (var chapter in chapters) {
         buffer.writeln(chapter.title);
@@ -69,7 +69,7 @@ class ExportService {
       }
 
       // 2. 调用 EpubBuilder 生成二进制数据
-      final epubBytes = await EpubBuilder.build(book, chapters);
+      final epubBytes = EpubBuilder.build(book, chapters);
 
       // 3. 保存文件
       if (context.mounted) {

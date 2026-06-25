@@ -120,7 +120,7 @@ class SettingsPage extends StatelessWidget {
             leading: const Icon(Icons.backup_outlined),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              Navigator.push(context, MonetPageRoute(builder: (_) => DataManagePage()));
+              Navigator.push(context, MonetPageRoute(builder: (_) => const DataManagePage()));
             },
           ),
 

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
-import 'package:monet_writer/providers/theme_provider.dart';
+import 'package:monet_writer/utils/provider_select_ext.dart';
 
 class KeyboardToolbar extends StatelessWidget {
   const KeyboardToolbar({super.key});
@@ -11,8 +11,8 @@ class KeyboardToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<WritingProvider>();
-    final currentTheme = context.watch<UserProvider>().currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final currentTheme = context.selectCurrentTheme;
+    final isFlat = context.selectIsFlat;
 
     return Container(
       height: 48,

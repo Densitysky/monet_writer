@@ -135,11 +135,12 @@ class _DesktopDataManagePanelState extends State<DesktopDataManagePanel> {
 
       setState(() => _isProcessing = true);
 
-      // 【实装】：调用底层循环生成全书文本逻辑！
-      await DatabaseService().exportAllBooksToTxt(outputDir);
+      final ok = await DatabaseService().exportAllBooksToTxt(outputDir);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ 已成功将所有书籍打包导出至：$outputDir')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ok ? '✅ 已成功将所有书籍打包导出至：$outputDir' : '❌ TXT导出失败，请重试'),
+        ));
       }
     } catch (e) {
       if (mounted) {

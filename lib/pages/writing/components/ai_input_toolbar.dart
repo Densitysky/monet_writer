@@ -68,7 +68,7 @@ class _AiInputToolbarState extends State<AiInputToolbar> {
   Widget build(BuildContext context) {
     final currentTheme = context.watch<UserProvider>().currentTheme;
     final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
-    final accentColor = Colors.purpleAccent; // 保持魔法紫作为点缀
+    const accentColor = Colors.purpleAccent; // 保持魔法紫作为点缀
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
