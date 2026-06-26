@@ -94,8 +94,8 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
     if (_editorFocusNode != provider.editorFocusNode) {
       _editorFocusNode?.removeListener(_onEditorFocusChange);
       _editorFocusNode = provider.editorFocusNode;
-      _editorFocusNode.addListener(_onEditorFocusChange);
-      _isEditorFocused = _editorFocusNode.hasFocus;
+      _editorFocusNode!.addListener(_onEditorFocusChange);
+      _isEditorFocused = _editorFocusNode!.hasFocus;
     }
   }
 
