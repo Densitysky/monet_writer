@@ -49,7 +49,9 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _hasInitialized = false;
   bool _isKeyboardVisible = false;
+  bool _isEditorFocused = false;
   bool _showAiInput = false;
+  FocusNode? _editorFocusNode;
 
   @override
   void initState() {
@@ -59,6 +61,7 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
 
   @override
   void dispose() {
+    _editorFocusNode?.removeListener(_onEditorFocusChange);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -85,6 +88,22 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
         });
       }
       _hasInitialized = true;
+    }
+    // 建立编辑器焦点监听
+    final provider = context.read<WritingProvider>();
+    if (_editorFocusNode != provider.editorFocusNode) {
+      _editorFocusNode?.removeListener(_onEditorFocusChange);
+      _editorFocusNode = provider.editorFocusNode;
+      _editorFocusNode.addListener(_onEditorFocusChange);
+      _isEditorFocused = _editorFocusNode.hasFocus;
+    }
+  }
+
+  void _onEditorFocusChange() {
+    if (mounted) {
+      setState(() {
+        _isEditorFocused = _editorFocusNode?.hasFocus ?? false;
+      });
     }
   }
 
@@ -186,7 +205,7 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
                           textAlign: TextAlign.left,
                           maxLines: 1,
                           textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                          onSubmitted: (_) => provider.editorFocusNode.requestFocus(),
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
@@ -349,7 +368,7 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
                 if (hasChapter) ...[
                   if (_showAiInput)
                     AiInputToolbar(onClose: _closeAiInput)
-                  else if (_isKeyboardVisible)
+                  else if (_isKeyboardVisible && _isEditorFocused)
                     const KeyboardToolbar(),
                 ]
               ],

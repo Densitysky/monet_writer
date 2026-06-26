@@ -224,12 +224,7 @@ mixin WritingChapterMixin on WritingProviderBase {
 
     contentController.selection = TextSelection.collapsed(offset: targetCursor);
 
-    // 2. 主动夺取焦点，自动拉起键盘！
-    if (!editorFocusNode.hasFocus) {
-      editorFocusNode.requestFocus();
-    }
-
-    // 3. 开始高频轮询，等键盘彻底弹起并排版完成后，强制恢复屏幕滚动高度
+    // 2. 开始高频轮询，等排版完成后恢复屏幕滚动高度
     _tryRestoreScroll(savedOffset, 0);
   }
 
