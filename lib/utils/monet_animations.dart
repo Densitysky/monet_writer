@@ -60,6 +60,7 @@ class MonetPageRoute<T> extends PageRouteBuilder<T> {
           transitionDuration: MonetDurations.page,
           reverseTransitionDuration: MonetDurations.component,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            if (MediaQuery.of(context).disableAnimations) return child;
             final curvedEntry = CurvedAnimation(
               parent: animation,
               curve: MonetCurves.entry,
@@ -92,6 +93,7 @@ class MonetModalRoute<T> extends PageRouteBuilder<T> {
           transitionDuration: MonetDurations.component,
           reverseTransitionDuration: MonetDurations.component,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            if (MediaQuery.of(context).disableAnimations) return child;
             final curvedEntry = CurvedAnimation(
               parent: animation,
               curve: MonetCurves.entry,
@@ -101,7 +103,10 @@ class MonetModalRoute<T> extends PageRouteBuilder<T> {
                 begin: const Offset(0, 1),
                 end: Offset.zero,
               ).animate(curvedEntry),
-              child: child,
+              child: FadeTransition(
+                opacity: Tween<double>(begin: 0, end: 1).animate(curvedEntry),
+                child: child,
+              ),
             );
           },
         );
@@ -162,6 +167,14 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -187,10 +200,10 @@ Future<T?> showMonetDialog<T>({
     barrierLabel: 'monet_dialog',
     barrierDismissible: barrierDismissible,
     barrierColor: Colors.black.withValues(alpha: 0.4),
-    transitionDuration: MonetDurations.component,
-    pageBuilder: (context, animation, secondaryAnimation) =>
-        builder(context),
+    transitionDuration: MediaQuery.of(context).disableAnimations ? Duration.zero : MonetDurations.component,
+    pageBuilder: (context, animation, secondaryAnimation) => builder(context),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.of(context).disableAnimations) return child;
       final curve = CurvedAnimation(
         parent: animation,
         curve: MonetCurves.entry,
@@ -234,70 +247,39 @@ class BouncingWidget extends StatefulWidget {
 class _BouncingWidgetState extends State<BouncingWidget>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _scale;
+  double _currentScale = 1.0;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: MonetDurations.micro,
-    );
-    _scale = Tween<double>(begin: 1.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: MonetCurves.press),
-    );
+    _controller = AnimationController(vsync: this, duration: MonetDurations.micro);
+    _controller.addListener(() {
+      setState(() => _currentScale = 1.0 - (1.0 - widget.scaleFactor) * _controller.value);
+    });
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+    }
   }
 
-  void _press() {
+  @override void dispose() { _controller.dispose(); super.dispose(); }
+
+  void _onTap() {
     if (widget.haptic) HapticFeedback.selectionClick();
-    _controller
-      ..value = 0
-      ..animateTo(1, curve: const Interval(0, 0.5, curve: MonetCurves.press));
-    setState(() {
-      _scale = Tween<double>(
-        begin: 1.0,
-        end: widget.scaleFactor,
-      ).animate(CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0, 0.5, curve: MonetCurves.press),
-      ));
-    });
-  }
-
-  void _release() {
-    _scale = Tween<double>(
-      begin: widget.scaleFactor,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.5, 1, curve: MonetCurves.press),
-    ));
-    _controller.forward().then((_) {
-      widget.onTap();
-    });
+    if (_controller.duration == Duration.zero) { widget.onTap(); return; }
+    _controller..value = 0..forward().then((_) => widget.onTap());
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _press(),
-      onTapUp: (_) => _release(),
-      onTapCancel: () {},
-      child: AnimatedBuilder(
-        animation: _scale,
-        builder: (_, child) => Transform.scale(
-          scale: _scale.value,
-          child: child,
-        ),
-        child: widget.child,
-      ),
+      onTap: _onTap,
+      child: Transform.scale(scale: _currentScale, child: widget.child),
     );
   }
 }

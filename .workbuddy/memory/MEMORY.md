@@ -14,7 +14,15 @@
 5. **流式文件传输**：LAN同步和备份恢复均使用流式处理避免OOM
 6. **独立废纸篓表**：TrashedChapter 独立 @collection，非软删除标记
 7. **双平台路由**：width>800px → DesktopHomePage(侧边栏), else → MainScaffold(底部导航)
-8. **双主题风格**：modern(Material 3 拟物风) + flat(极简扁平风)
+8. **三主题风格 × 三配色方案**：`AppThemeStyle` (modern/flat/golden) × `ColorPalette` (goldenAngle/chinese/japanese)，黄金体系共用 `StyleConfig.golden` 统一字体格式
+9. **个人主页拖拽 Header**：内容区 Positioned 钉底 + 拖拽把手，三档磁吸 (220/320/500)，封面 3:4 竖图裁剪
+
+## 主题配色说明
+- 金律：137.5° 色相旋转，用户自选 seedColor，ColorScheme 手动构建
+- 中国色：种子色 靛青 #1661AB，fromSeed + 暖纸底色覆盖
+- 和色：种子色 瑠璃 #1E50A2，fromSeed + 和纸底色覆盖
+- 24 色色盘保留三套（goldenAngleColors / chineseColors / japaneseColors）
+- 色盘弹窗选色自动切换对应 ColorPalette
 
 ## 项目文件统计
 - 127个 Dart 源文件（lib/目录）

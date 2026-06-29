@@ -1,7 +1,7 @@
 name: monet_writer
 description: "A minimalist novel writer app."
 publish_to: 'none'
-version: 1.0.1
+version: 1.0.2
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -35,7 +35,7 @@ dependencies:
   # 图片选择器 (相册/拍照 - 用于选头像)
   image_picker: ^1.0.7
   # 图片裁切 (用于头像裁切)
-  image_cropper: ^8.0.2
+  image_cropper: ^12.2.0
   # 颜色提取器 (Monet取色核心 - 从头像提取主题色)
   palette_generator: ^0.3.3
 
@@ -45,6 +45,7 @@ dependencies:
 
   share_plus: ^12.0.1      # 用于分享文件
   archive: ^4.0.7         # 用于 ZIP 打包 (为全量备份做准备，也可以用于 epub)
+  xml: ^6.6.1             # EPUB OPF/XHTML 解析
 
   flutter_file_dialog: ^3.0.2  # 【新增】用于调用系统原生“另存为”
   window_manager: ^0.5.1

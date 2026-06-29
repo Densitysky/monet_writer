@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -45,24 +46,38 @@ class _WritingPageContent extends StatefulWidget {
   State<_WritingPageContent> createState() => _WritingPageContentState();
 }
 
-class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBindingObserver {
+class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBindingObserver, TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _hasInitialized = false;
   bool _isKeyboardVisible = false;
   bool _isEditorFocused = false;
   bool _showAiInput = false;
+  bool _showTopBar = true;
+  int _sessionStartWords = 0;
+  DateTime? _sessionStart;
+  late AnimationController _topBarAnim;
+  late AnimationController _hintFade;
+  Timer? _hideTopBarTimer;
+  Timer? _hideHintTimer;
   FocusNode? _editorFocusNode;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _topBarAnim = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
+    _hintFade = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
+    _startAutoHide();
   }
 
   @override
   void dispose() {
     _editorFocusNode?.removeListener(_onEditorFocusChange);
     WidgetsBinding.instance.removeObserver(this);
+    _topBarAnim.dispose();
+    _hintFade.dispose();
+    _hideTopBarTimer?.cancel();
+    _hideHintTimer?.cancel();
     super.dispose();
   }
 
@@ -71,10 +86,61 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
     final bottomInset = View.of(context).viewInsets.bottom;
     final newValue = bottomInset > 0.0;
     if (newValue != _isKeyboardVisible) {
-      setState(() {
-        _isKeyboardVisible = newValue;
-      });
+      setState(() => _isKeyboardVisible = newValue);
+      if (newValue) _showTopBarTemporarily();
     }
+  }
+
+  void _startAutoHide() {
+    _hideTopBarTimer?.cancel();
+    _hideTopBarTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted && _isEditorFocused) {
+        _topBarAnim.reverse();
+        _showTopBar = false;
+        setState(() {});
+      }
+    });
+  }
+
+  void _showTopBarTemporarily() {
+    _hideTopBarTimer?.cancel();
+    _hideHintTimer?.cancel();
+    _topBarAnim.forward();
+    _showTopBar = true;
+    setState(() {});
+    _hideTopBarTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        _topBarAnim.reverse();
+        _showTopBar = false;
+        setState(() {});
+      }
+    });
+  }
+
+  void _recordSessionStart() {
+    if (_sessionStart != null) return;
+    _sessionStart = DateTime.now();
+    _sessionStartWords = context.read<WritingProvider>()
+        .contentController.text.replaceAll(RegExp(r'\s+'), '').length;
+  }
+
+  String _sessionSummary() {
+    if (_sessionStart == null) return '';
+    final elapsed = DateTime.now().difference(_sessionStart!);
+    final words = context.read<WritingProvider>()
+        .contentController.text.replaceAll(RegExp(r'\s+'), '').length;
+    final added = (words - _sessionStartWords).clamp(0, 999999);
+    final mins = elapsed.inMinutes;
+    if (mins < 1 && added < 10) return '';
+    final timeStr = mins > 0 ? '${mins}m' : '${elapsed.inSeconds}s';
+    return '已写 $timeStr · +$added 字';
+  }
+
+  void _showHintOverlay() {
+    _recordSessionStart();
+    _hideHintTimer?.cancel();
+    _hintFade.forward(from: 0);
+    _hideHintTimer = Timer(const Duration(seconds: 8), () {});
   }
 
   @override
@@ -155,18 +221,16 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
     final hasChapter = provider.currentChapter != null;
     final wordCount = provider.contentController.text.replaceAll(RegExp(r'\s+'), '').length;
 
-    BoxDecoration? bgDecoration;
     final backgroundColor = userProvider.currentTheme.backgroundColor;
     final headerTextColor = userProvider.currentTheme.textColor.withValues(alpha: 0.7);
+    final txtColor = userProvider.currentTheme.textColor;
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         final canExit = await _onWillPop();
-        if (canExit && mounted) {
-          Navigator.of(context).pop();
-        }
+        if (canExit && mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
         key: _scaffoldKey,
@@ -176,202 +240,231 @@ class _WritingPageContentState extends State<_WritingPageContent> with WidgetsBi
         drawerEnableOpenDragGesture: false,
         endDrawerEnableOpenDragGesture: false,
         resizeToAvoidBottomInset: true,
-
-        body: Container(
-          decoration: bgDecoration ?? BoxDecoration(color: backgroundColor),
-          child: SafeArea(
-            child: Column(
-              children: [
-                // 顶部栏
-                Container(
-                  height: 50,
-                  padding: const EdgeInsets.only(left: 4, right: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: Icon(CupertinoIcons.chevron_back, size: 22, color: headerTextColor),
-                        onPressed: () async {
-                          final canExit = await _onWillPop();
-                          if (canExit && mounted) {
-                            Navigator.pop(context);
-                          }
-                        },
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: provider.titleController,
-                          enabled: hasChapter,
-                          textAlign: TextAlign.left,
-                          maxLines: 1,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => provider.editorFocusNode.requestFocus(),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            filled: false,
-                            hintText: hasChapter ? '无标题' : '暂无章节',
-                            hintStyle: TextStyle(color: headerTextColor.withValues(alpha: 0.3)),
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: userProvider.currentTheme.textColor,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onChanged: (_) => provider.onTextChanged(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: hasChapter ? () {
-                              FocusScope.of(context).unfocus();
-                              showModalBottomSheet(
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) => MoreActionsSheet(provider: provider),
-                              );
-                            } : null,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(CupertinoIcons.ellipsis_circle, size: 22, color: headerTextColor.withValues(alpha: hasChapter ? 1.0 : 0.3)),
-                            ),
-                          ),
-                          Container(width: 1, height: 12, color: headerTextColor.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(horizontal: 4)),
-                          WordGoalWidget(currentWordCount: hasChapter ? wordCount : 0),
-                        ],
-                      ),
-                    ],
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTapUp: (d) {
+            if (d.localPosition.dy < 60 && !_showTopBar) _showTopBarTemporarily();
+          },
+          child: Container(
+            decoration: BoxDecoration(color: backgroundColor),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 顶部栏 — 自动收起，轻触顶部呼出
+                  AnimatedBuilder(
+                    animation: _topBarAnim,
+                    builder: (context, child) {
+                      return AnimatedSize(
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: _topBarAnim.value > 0.01
+                            ? Opacity(
+                                opacity: _topBarAnim.value,
+                                child: Container(
+                                  height: 50,
+                                  padding: const EdgeInsets.only(left: 4, right: 12),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(CupertinoIcons.chevron_back, size: 22, color: headerTextColor),
+                                        onPressed: () async {
+                                          final canExit = await _onWillPop();
+                                          if (canExit && mounted) Navigator.pop(context);
+                                        },
+                                      ),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: provider.titleController,
+                                          enabled: hasChapter,
+                                          textAlign: TextAlign.left,
+                                          maxLines: 1,
+                                          textInputAction: TextInputAction.done,
+                                          onSubmitted: (_) => provider.editorFocusNode.requestFocus(),
+                                          decoration: InputDecoration(
+                                            border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            filled: false,
+                                            hintText: hasChapter ? '无标题' : '暂无章节',
+                                            hintStyle: TextStyle(color: headerTextColor.withValues(alpha: 0.3)),
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: txtColor, overflow: TextOverflow.ellipsis),
+                                          onChanged: (_) => provider.onTextChanged(),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          InkWell(
+                                            borderRadius: BorderRadius.circular(8),
+                                            onTap: hasChapter ? () {
+                                              FocusScope.of(context).unfocus();
+                                              showModalBottomSheet(context: context, backgroundColor: Colors.transparent, builder: (_) => MoreActionsSheet(provider: provider));
+                                            } : null,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Icon(CupertinoIcons.ellipsis_circle, size: 22, color: headerTextColor.withValues(alpha: hasChapter ? 1 : 0.3)),
+                                            ),
+                                          ),
+                                          Container(width: 1, height: 12, color: headerTextColor.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(horizontal: 4)),
+                                          WordGoalWidget(currentWordCount: hasChapter ? wordCount : 0),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      );
+                    },
                   ),
-                ),
 
-                // 正文区域
-                Expanded(
-                  child: Stack(
-                    children: [
-                      if (hasChapter)
-                        Positioned.fill(
-                          child: Theme(
-                            data: Theme.of(context).copyWith(
-                              scrollbarTheme: ScrollbarThemeData(
-                                thumbColor: WidgetStateProperty.resolveWith((states) {
-                                  if (states.contains(WidgetState.dragged)) {
-                                    return userProvider.currentTheme.textColor.withValues(alpha: 0.4);
-                                  }
-                                  return userProvider.currentTheme.textColor.withValues(alpha: 0.15);
-                                }),
-                                thickness: WidgetStateProperty.resolveWith((states) {
-                                  if (states.contains(WidgetState.dragged)) return 8.0;
-                                  return 3.0;
-                                }),
-                                radius: const Radius.circular(8),
-                                interactive: true,
-                                crossAxisMargin: 2,
+                  // 正文区域
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        if (hasChapter)
+                          Positioned.fill(
+                            child: Theme(
+                              data: Theme.of(context).copyWith(
+                                scrollbarTheme: ScrollbarThemeData(
+                                  thumbColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.dragged)) return txtColor.withValues(alpha: 0.4);
+                                    return txtColor.withValues(alpha: 0.15);
+                                  }),
+                                  thickness: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.dragged)) return 8.0;
+                                    return 3.0;
+                                  }),
+                                  radius: const Radius.circular(8),
+                                  interactive: true,
+                                  crossAxisMargin: 2,
+                                ),
                               ),
-                            ),
-                            child: Scrollbar(
-                              controller: provider.scrollController,
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.translucent,
-                                onHorizontalDragEnd: (details) async {
-                                  final velocity = details.primaryVelocity ?? 0;
-                                  if (velocity > 500) {
-                                    final success = await provider.switchToPreviousChapter();
-                                    if (success) {
-                                      HapticFeedback.lightImpact();
-                                      if (mounted) _showGestureToast('已切换至：${provider.currentChapter?.title ?? "上一章"}');
+                              child: Scrollbar(
+                                controller: provider.scrollController,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onDoubleTap: () {
+                                    if (_showTopBar) {
+                                      _topBarAnim.reverse();
+                                      _showTopBar = false;
+                                      _showHintOverlay();
+                                      setState(() {});
                                     } else {
-                                      HapticFeedback.vibrate();
-                                      if (mounted) _showGestureToast('已经是第一章啦');
+                                      _showTopBarTemporarily();
                                     }
-                                  } else if (velocity < -500) {
-                                    final success = await provider.switchToNextChapter();
-                                    if (success) {
-                                      HapticFeedback.lightImpact();
-                                      if (mounted) _showGestureToast('已切换至：${provider.currentChapter?.title ?? "下一章"}');
-                                    } else {
-                                      HapticFeedback.vibrate();
-                                      if (mounted) _showGestureToast('已经是最新一章啦');
+                                  },
+                                  onHorizontalDragEnd: (details) async {
+                                    final velocity = details.primaryVelocity ?? 0;
+                                    if (velocity > 500) {
+                                      final success = await provider.switchToPreviousChapter();
+                                      if (success) {
+                                        HapticFeedback.lightImpact();
+                                        if (mounted) _showGestureToast('已切换至：${provider.currentChapter?.title ?? "上一章"}');
+                                      } else {
+                                        HapticFeedback.vibrate();
+                                        if (mounted) _showGestureToast('已经是第一章啦');
+                                      }
+                                    } else if (velocity < -500) {
+                                      final success = await provider.switchToNextChapter();
+                                      if (success) {
+                                        HapticFeedback.lightImpact();
+                                        if (mounted) _showGestureToast('已切换至：${provider.currentChapter?.title ?? "下一章"}');
+                                      } else {
+                                        HapticFeedback.vibrate();
+                                        if (mounted) _showGestureToast('已经是最新一章啦');
+                                      }
                                     }
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  child: MonetRichEditor(
-                                    controller: provider.contentController,
-                                    focusNode: provider.editorFocusNode,
-                                    scrollController: provider.scrollController,
-                                    scrollable: true,
-                                    expands: true,
-                                    hintText: '开始创作...',
-                                    padding: EdgeInsets.only(
-                                      top: 16,
-                                      bottom: provider.isTypewriterMode
-                                          ? MediaQuery.of(context).size.height * 0.6
-                                          : (_isKeyboardVisible ? 140.0 : 80.0),
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    child: MonetRichEditor(
+                                      controller: provider.contentController,
+                                      focusNode: provider.editorFocusNode,
+                                      scrollController: provider.scrollController,
+                                      scrollable: true,
+                                      expands: true,
+                                      hintText: '开始创作...',
+                                      padding: EdgeInsets.only(
+                                        top: 24,
+                                        bottom: provider.isTypewriterMode ? MediaQuery.of(context).size.height * 0.6 : (_isKeyboardVisible ? 140.0 : 80.0),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        )
-                      else
-                        Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.book, size: 64, color: headerTextColor.withValues(alpha: 0.2)),
-                              const SizedBox(height: 16),
-                              Text('当前无可用章节', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: headerTextColor)),
-                              const SizedBox(height: 8),
-                              Text('请在左侧目录中新建或从废纸篓恢复', style: TextStyle(fontSize: 13, color: headerTextColor.withValues(alpha: 0.5))),
-                              const SizedBox(height: 24),
-                              FilledButton.icon(
-                                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                                icon: const Icon(Icons.menu_book, size: 18),
-                                label: const Text('打开目录'),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.8),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                          )
+                        else
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(CupertinoIcons.book, size: 64, color: headerTextColor.withValues(alpha: 0.2)),
+                                const SizedBox(height: 16),
+                                Text('当前无可用章节', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: headerTextColor)),
+                                const SizedBox(height: 8),
+                                Text('请在左侧目录中新建或从废纸篓恢复', style: TextStyle(fontSize: 13, color: headerTextColor.withValues(alpha: 0.5))),
+                                const SizedBox(height: 24),
+                                FilledButton.icon(
+                                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                                  icon: const Icon(Icons.menu_book, size: 18),
+                                  label: const Text('打开目录'),
+                                  style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4 : 20))),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
 
-                      // 左侧抽屉手柄（替代不可见双击热区）
-                      EdgeDrawerHandle(
-                        isLeft: true,
-                        onOpen: () => _scaffoldKey.currentState?.openDrawer(),
-                        color: userProvider.currentTheme.textColor,
-                      ),
+                        // 沉浸提示浮层
+                        if (!_showTopBar && hasChapter)
+                          Positioned(
+                            top: 0, left: 0, right: 0,
+                            child: IgnorePointer(
+                              child: AnimatedBuilder(
+                                animation: _hintFade,
+                                builder: (context, child) {
+                                  final summary = _sessionSummary();
+                                  return Opacity(
+                                    opacity: (1.0 - _hintFade.value).clamp(0.0, 1.0),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 8, bottom: 4),
+                                      child: Text(
+                                        summary.isNotEmpty ? '双击退出 · $summary' : '双击退出沉浸模式',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(fontSize: 12, color: txtColor.withValues(alpha: 0.2)),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
 
-                      // 右侧抽屉手柄（替代不可见双击热区）
-                      EdgeDrawerHandle(
-                        isLeft: false,
-                        onOpen: () => _scaffoldKey.currentState?.openEndDrawer(),
-                        color: userProvider.currentTheme.textColor,
-                      ),
-                    ],
+                        // 侧边栏手柄（沉浸时隐藏）
+                        if (_showTopBar) ...[
+                          EdgeDrawerHandle(isLeft: true, onOpen: () => _scaffoldKey.currentState?.openDrawer(), color: txtColor),
+                          EdgeDrawerHandle(isLeft: false, onOpen: () => _scaffoldKey.currentState?.openEndDrawer(), color: txtColor),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
 
-                if (hasChapter) ...[
-                  if (_showAiInput)
-                    AiInputToolbar(onClose: _closeAiInput)
-                  else if (_isKeyboardVisible && _isEditorFocused)
-                    const KeyboardToolbar(),
-                ]
-              ],
+                  if (_showTopBar && hasChapter) ...[
+                    if (_showAiInput)
+                      AiInputToolbar(onClose: _closeAiInput)
+                    else if (_isKeyboardVisible && _isEditorFocused)
+                      const KeyboardToolbar(),
+                  ]
+                ],
+              ),
             ),
           ),
         ),

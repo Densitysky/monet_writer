@@ -57,18 +57,40 @@ class SettingsPage extends StatelessWidget {
           ),
 
           ListTile(
-            title: const Text('极简视觉风格'),
-            subtitle: Text(isFlat ? '已开启极简扁平风' : '已开启现代拟物风 (M3)'),
-            trailing: CupertinoSwitch(
-              activeTrackColor: theme.colorScheme.primary,
-              value: isFlat,
-              onChanged: (value) {
-                themeProvider.setThemeStyle(value ? AppThemeStyle.flat : AppThemeStyle.modern);
-              },
+            title: const Text('视觉风格'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SegmentedButton<AppThemeStyle>(
+                  style: SegmentedButton.styleFrom(selectedBackgroundColor: theme.colorScheme.primaryContainer),
+                  segments: const [
+                    ButtonSegment(value: AppThemeStyle.modern, label: Text('现代'), icon: Icon(Icons.water_drop, size: 14)),
+                    ButtonSegment(value: AppThemeStyle.flat, label: Text('极简'), icon: Icon(Icons.grid_view_rounded, size: 14)),
+                    ButtonSegment(value: AppThemeStyle.golden, label: Text('黄金'), icon: Icon(Icons.auto_awesome, size: 14)),
+                  ],
+                  selected: {themeProvider.themeStyle},
+                  onSelectionChanged: (s) => themeProvider.setThemeStyle(s.first),
+                ),
+                if (themeProvider.themeStyle == AppThemeStyle.golden) ...[
+                  const SizedBox(height: 12),
+                  Text('配色方案', style: TextStyle(fontSize: 13, color: theme.colorScheme.outline)),
+                  const SizedBox(height: 6),
+                  SegmentedButton<ColorPalette>(
+                    style: SegmentedButton.styleFrom(
+                      selectedBackgroundColor: theme.colorScheme.primaryContainer,
+                      selectedForegroundColor: theme.colorScheme.onPrimaryContainer,
+                    ),
+                    segments: const [
+                      ButtonSegment(value: ColorPalette.goldenAngle, label: Text('金律'), icon: Icon(Icons.auto_awesome, size: 13)),
+                      ButtonSegment(value: ColorPalette.chinese, label: Text('中国色'), icon: Icon(Icons.brush, size: 13)),
+                      ButtonSegment(value: ColorPalette.japanese, label: Text('和色'), icon: Icon(Icons.landslide, size: 13)),
+                    ],
+                    selected: {themeProvider.colorPalette},
+                    onSelectionChanged: (s) => themeProvider.setColorPalette(s.first),
+                  ),
+                ],
+              ],
             ),
-            onTap: () {
-              themeProvider.setThemeStyle(!isFlat ? AppThemeStyle.flat : AppThemeStyle.modern);
-            },
           ),
 
           ListTile(
@@ -130,47 +152,59 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  // 金律配色色盘 — 24色 / 4行 / 黄金角度分布
+  // 多风格色盘选择
   void _showColorPicker(BuildContext context, ThemeProvider provider) {
     final isFlat = context.read<ThemeProvider>().themeStyle == AppThemeStyle.flat;
     final currentSeed = provider.seedColor;
+    final goldenC = ThemeProvider.goldenAngleColors;
+    final chineseC = ThemeProvider.chineseColors;
+    final japaneseC = ThemeProvider.japaneseColors;
 
-    const List<Color> colors = [
-      // 第一行：金律原色（高饱和，黄金角度 137.5° 分布）
-      Color(0xFFE8618C), Color(0xFFE8853A), Color(0xFFD4A017),
-      Color(0xFF2E8B57), Color(0xFF3A7CA5), Color(0xFF7B5EA7),
-      // 第二行：莫奈自然色（φ 降饱和 ×0.618，水彩质感）
-      Color(0xFFE2B2B1), Color(0xFFC9A96E), Color(0xFF8B9A6E),
-      Color(0xFFA0B4C8), Color(0xFF9A8FBF), Color(0xFFB0ADA6),
-      // 第三行：深沉色（φ 降明度，暗色模式）
-      Color(0xFF9B2D3C), Color(0xFF8B5E34), Color(0xFF1A6B54),
-      Color(0xFF1B4F72), Color(0xFF4A3572), Color(0xFF3D3D3D),
-      // 第四行：无色系（φ 亮度梯度 60:30:10）
-      Color(0xFFFAFAF8), Color(0xFFF0EFEA), Color(0xFFE2E1DD),
-      Color(0xFFB0AEAA), Color(0xFF5C5B57), Color(0xFF1C1C1A),
-    ];
+    void onPick(Color c, {ColorPalette? toPalette}) {
+      provider.setSeedColor(c);
+      if (toPalette != null && provider.colorPalette != toPalette) {
+        provider.setColorPalette(toPalette);
+      }
+      Navigator.pop(context);
+    }
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('选择主题色 (金律 24 色)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('选择主题色', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
         contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
         content: SizedBox(
           width: double.maxFinite,
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildColorRow('金律原色', colors.sublist(0, 6), currentSeed, provider, ctx),
+                  _buildColorRow('金律原色', goldenC.sublist(0, 6), currentSeed, ctx, () => {}, paletteHint: ColorPalette.goldenAngle),
                   const SizedBox(height: 12),
-                  _buildColorRow('莫奈自然色', colors.sublist(6, 12), currentSeed, provider, ctx),
+                  _buildColorRow('莫奈自然色', goldenC.sublist(6, 12), currentSeed, ctx, () => {}, paletteHint: ColorPalette.goldenAngle),
                   const SizedBox(height: 12),
-                  _buildColorRow('深沉色', colors.sublist(12, 18), currentSeed, provider, ctx),
+                  _buildColorRow('深沉色', goldenC.sublist(12, 18), currentSeed, ctx, () => {}, paletteHint: ColorPalette.goldenAngle),
                   const SizedBox(height: 12),
-                  _buildColorRow('无色系', colors.sublist(18, 24), currentSeed, provider, ctx),
+                  _buildColorRow('无色系', goldenC.sublist(18, 24), currentSeed, ctx, () => {}, paletteHint: ColorPalette.goldenAngle),
+                  const Divider(height: 32),
+                  _buildColorRow('中国色·青', chineseC.sublist(0, 6), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.chinese), paletteHint: ColorPalette.chinese),
+                  const SizedBox(height: 12),
+                  _buildColorRow('中国色·暖', chineseC.sublist(6, 12), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.chinese), paletteHint: ColorPalette.chinese),
+                  const SizedBox(height: 12),
+                  _buildColorRow('中国色·淡', chineseC.sublist(12, 18), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.chinese), paletteHint: ColorPalette.chinese),
+                  const SizedBox(height: 12),
+                  _buildColorRow('中国色·艳', chineseC.sublist(18, 24), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.chinese), paletteHint: ColorPalette.chinese),
+                  const Divider(height: 32),
+                  _buildColorRow('和色·青', japaneseC.sublist(0, 6), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.japanese), paletteHint: ColorPalette.japanese),
+                  const SizedBox(height: 12),
+                  _buildColorRow('和色·暖', japaneseC.sublist(6, 12), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.japanese), paletteHint: ColorPalette.japanese),
+                  const SizedBox(height: 12),
+                  _buildColorRow('和色·淡', japaneseC.sublist(12, 18), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.japanese), paletteHint: ColorPalette.japanese),
+                  const SizedBox(height: 12),
+                  _buildColorRow('和色·深', japaneseC.sublist(18, 24), currentSeed, ctx, () => provider.setColorPalette(ColorPalette.japanese), paletteHint: ColorPalette.japanese),
                 ],
               ),
             ),
@@ -183,7 +217,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildColorRow(String label, List<Color> rowColors, Color currentSeed, ThemeProvider provider, BuildContext ctx) {
+  Widget _buildColorRow(String label, List<Color> rowColors, Color currentSeed, BuildContext ctx, VoidCallback onPaletteSwitch, {ColorPalette? paletteHint}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -195,7 +229,13 @@ class SettingsPage extends StatelessWidget {
           children: rowColors.map((c) {
             final isSelected = c.toARGB32() == currentSeed.toARGB32();
             return GestureDetector(
-              onTap: () { provider.setSeedColor(c); Navigator.pop(ctx); },
+              onTap: () {
+                Provider.of<ThemeProvider>(ctx, listen: false).setSeedColor(c);
+                if (paletteHint != null && Provider.of<ThemeProvider>(ctx, listen: false).colorPalette != paletteHint) {
+                  Provider.of<ThemeProvider>(ctx, listen: false).setColorPalette(paletteHint);
+                }
+                Navigator.pop(ctx);
+              },
               child: Container(
                 width: 38, height: 38,
                 decoration: BoxDecoration(

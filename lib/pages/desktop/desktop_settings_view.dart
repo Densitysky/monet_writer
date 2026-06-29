@@ -85,17 +85,32 @@ class DesktopSettingsView extends StatelessWidget {
                     ),
                     Divider(height: 1, color: currentTheme.textColor.withValues(alpha: 0.05)),
                     _buildSettingRow(
-                      title: 'UI 视觉风格', subtitle: '极简扁平风 (硬朗) 或 现代拟物风 (阴影)', currentTheme: currentTheme,
+                      title: 'UI 视觉风格', subtitle: '现代 · 极简 · 黄金', currentTheme: currentTheme,
                       trailing: SegmentedButton<AppThemeStyle>(
                         segments: const [
-                          ButtonSegment(value: AppThemeStyle.flat, label: Text('极简扁平', style: TextStyle(fontSize: 12))),
-                          ButtonSegment(value: AppThemeStyle.modern, label: Text('现代拟物', style: TextStyle(fontSize: 12))),
+                          ButtonSegment(value: AppThemeStyle.modern, label: Text('现代', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: AppThemeStyle.flat, label: Text('极简', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: AppThemeStyle.golden, label: Text('黄金', style: TextStyle(fontSize: 11))),
                         ],
                         selected: {themeProvider.themeStyle},
                         onSelectionChanged: (set) => themeProvider.setThemeStyle(set.first),
                         style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)))),
                       ),
                     ),
+                    if (themeProvider.themeStyle == AppThemeStyle.golden)
+                      _buildSettingRow(
+                        title: '配色方案', subtitle: '金律 · 中国色 · 和色', currentTheme: currentTheme,
+                        trailing: SegmentedButton<ColorPalette>(
+                          segments: const [
+                            ButtonSegment(value: ColorPalette.goldenAngle, label: Text('金律', style: TextStyle(fontSize: 10))),
+                            ButtonSegment(value: ColorPalette.chinese, label: Text('中国色', style: TextStyle(fontSize: 10))),
+                            ButtonSegment(value: ColorPalette.japanese, label: Text('和色', style: TextStyle(fontSize: 10))),
+                          ],
+                          selected: {themeProvider.colorPalette},
+                          onSelectionChanged: (set) => themeProvider.setColorPalette(set.first),
+                          style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)))),
+                        ),
+                      ),
                     Divider(height: 1, color: currentTheme.textColor.withValues(alpha: 0.05)),
 
                     // 【解耦装载】36色主题色盘

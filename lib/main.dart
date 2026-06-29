@@ -135,7 +135,14 @@ class _MainScaffoldState extends State<MainScaffold> {
       body: _pages[_currentIndex],
 
       // 底部导航栏
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+          ),
+          NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
           setState(() {
@@ -157,6 +164,8 @@ class _MainScaffoldState extends State<MainScaffold> {
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: '我的',
+          ),
+        ],
           ),
         ],
       ),
