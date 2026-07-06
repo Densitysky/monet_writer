@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
@@ -9,6 +9,8 @@ import 'package:monet_writer/pages/settings/ai_prompts_page.dart';
 // 【新增】：引入境界体系弹窗
 import 'package:monet_writer/pages/settings/components/title_system_dialog.dart';
 import 'package:monet_writer/utils/monet_animations.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
+import 'package:monet_writer/widgets/theme/app_divider.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -19,131 +21,172 @@ class SettingsPage extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.isPaperOrParchment;
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+    final isGolden = themeProvider.themeStyle == AppThemeStyle.golden;
+
+    // 柔和/黄金模式下，把每个分组包进 AppCard；其他模式保持原样
+    Widget group({required String title, required List<Widget> tiles}) {
+      if (isNeumorphic || isGolden) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionHeader(title: title),
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (int i = 0; i < tiles.length; i++) ...[
+                    tiles[i],
+                    if (i < tiles.length - 1) const AppDivider(),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(title: title),
+          ...tiles,
+          const Divider(),
+        ],
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('设置'),
       ),
       body: ListView(
+        padding: isNeumorphic ? const EdgeInsets.symmetric(horizontal: 16, vertical: 16) : EdgeInsets.zero,
         children: [
-          const SizedBox(height: 10),
+          if (!isNeumorphic) const SizedBox(height: 10),
 
           // --- 分组 1: 个性化 ---
-          const _SectionHeader(title: '个性化'),
-
-          // 【新增】：成就与境界体系入口
-          ListTile(
-            title: const Text('成就与境界体系'),
-            subtitle: const Text('设置修仙、JOJO、武侠等多风格头衔'),
-            trailing: const Icon(Icons.auto_awesome),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => TitleSystemDialog(isFlat: isFlat),
-              );
-            },
-          ),
-
-          ListTile(
-            title: const Text('主页背景模糊'),
-            subtitle: const Text('开启后，个人中心背景图将应用高斯模糊'),
-            trailing: CupertinoSwitch(
-              activeTrackColor: theme.colorScheme.primary,
-              value: userProvider.isBackgroundBlurred,
-              onChanged: (value) => userProvider.toggleBackgroundBlur(value),
-            ),
-            onTap: () => userProvider.toggleBackgroundBlur(!userProvider.isBackgroundBlurred),
-          ),
-
-          ListTile(
-            title: const Text('视觉风格'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SegmentedButton<AppThemeStyle>(
-                  style: SegmentedButton.styleFrom(selectedBackgroundColor: theme.colorScheme.primaryContainer),
-                  segments: const [
-                    ButtonSegment(value: AppThemeStyle.modern, label: Text('现代'), icon: Icon(Icons.water_drop, size: 14)),
-                    ButtonSegment(value: AppThemeStyle.flat, label: Text('极简'), icon: Icon(Icons.grid_view_rounded, size: 14)),
-                    ButtonSegment(value: AppThemeStyle.golden, label: Text('黄金'), icon: Icon(Icons.auto_awesome, size: 14)),
-                  ],
-                  selected: {themeProvider.themeStyle},
-                  onSelectionChanged: (s) => themeProvider.setThemeStyle(s.first),
+          group(
+            title: '个性化',
+            tiles: [
+              // 【新增】：成就与境界体系入口
+              ListTile(
+                title: const Text('成就与境界体系'),
+                subtitle: const Text('设置修仙、JOJO、武侠等多风格头衔'),
+                trailing: const Icon(Icons.auto_awesome),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => TitleSystemDialog(isPaper: isPaper),
+                  );
+                },
+              ),
+              ListTile(
+                title: const Text('主页背景模糊'),
+                subtitle: const Text('开启后，个人中心背景图将应用高斯模糊'),
+                trailing: CupertinoSwitch(
+                  activeTrackColor: theme.colorScheme.primary,
+                  value: userProvider.isBackgroundBlurred,
+                  onChanged: (value) => userProvider.toggleBackgroundBlur(value),
                 ),
-                if (themeProvider.themeStyle == AppThemeStyle.golden) ...[
-                  const SizedBox(height: 12),
-                  Text('配色方案', style: TextStyle(fontSize: 13, color: theme.colorScheme.outline)),
-                  const SizedBox(height: 6),
-                  SegmentedButton<ColorPalette>(
-                    style: SegmentedButton.styleFrom(
-                      selectedBackgroundColor: theme.colorScheme.primaryContainer,
-                      selectedForegroundColor: theme.colorScheme.onPrimaryContainer,
+                onTap: () => userProvider.toggleBackgroundBlur(!userProvider.isBackgroundBlurred),
+              ),
+              ListTile(
+                title: const Text('视觉风格'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SegmentedButton<AppThemeStyle>(
+                      style: SegmentedButton.styleFrom(selectedBackgroundColor: theme.colorScheme.primaryContainer),
+                      segments: const [
+                        ButtonSegment(value: AppThemeStyle.modern, label: Text('现代', style: TextStyle(fontSize: 11))),
+                        ButtonSegment(value: AppThemeStyle.paper, label: Text('纸感', style: TextStyle(fontSize: 11))),
+                        ButtonSegment(value: AppThemeStyle.parchment, label: Text('羊皮纸', style: TextStyle(fontSize: 11))),
+                        ButtonSegment(value: AppThemeStyle.golden, label: Text('黄金', style: TextStyle(fontSize: 11))),
+                        ButtonSegment(value: AppThemeStyle.neumorphic, label: Text('新拟态', style: TextStyle(fontSize: 11))),
+                      ],
+                      selected: {themeProvider.themeStyle},
+                      onSelectionChanged: (s) => themeProvider.setThemeStyle(s.first),
                     ),
-                    segments: const [
-                      ButtonSegment(value: ColorPalette.goldenAngle, label: Text('金律'), icon: Icon(Icons.auto_awesome, size: 13)),
-                      ButtonSegment(value: ColorPalette.chinese, label: Text('中国色'), icon: Icon(Icons.brush, size: 13)),
-                      ButtonSegment(value: ColorPalette.japanese, label: Text('和色'), icon: Icon(Icons.landslide, size: 13)),
+                    if (themeProvider.themeStyle == AppThemeStyle.golden) ...[
+                      const SizedBox(height: 12),
+                      Text('配色方案', style: TextStyle(fontSize: 13, color: theme.colorScheme.outline)),
+                      const SizedBox(height: 6),
+                      SegmentedButton<ColorPalette>(
+                        style: SegmentedButton.styleFrom(
+                          selectedBackgroundColor: theme.colorScheme.primaryContainer,
+                          selectedForegroundColor: theme.colorScheme.onPrimaryContainer,
+                        ),
+                        segments: const [
+                          ButtonSegment(value: ColorPalette.goldenAngle, label: Text('金律'), icon: Icon(Icons.auto_awesome, size: 13)),
+                          ButtonSegment(value: ColorPalette.chinese, label: Text('中国色'), icon: Icon(Icons.brush, size: 13)),
+                          ButtonSegment(value: ColorPalette.japanese, label: Text('和色'), icon: Icon(Icons.landslide, size: 13)),
+                        ],
+                        selected: {themeProvider.colorPalette},
+                        onSelectionChanged: (s) => themeProvider.setColorPalette(s.first),
+                      ),
                     ],
-                    selected: {themeProvider.colorPalette},
-                    onSelectionChanged: (s) => themeProvider.setColorPalette(s.first),
-                  ),
-                ],
-              ],
-            ),
+                  ],
+                ),
+              ),
+              ListTile(
+                title: const Text('主题颜色'),
+                subtitle: Text('当前色值: #${themeProvider.seedColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}'),
+                trailing: CircleAvatar(
+                  backgroundColor: themeProvider.seedColor,
+                  radius: 12,
+                ),
+                onTap: () => _showColorPicker(context, themeProvider),
+              ),
+              ListTile(
+                title: const Text('外观模式'),
+                subtitle: Text(themeProvider.themeMode == ThemeMode.system ? '跟随系统' : (themeProvider.themeMode == ThemeMode.light ? '浅色模式' : '深色模式')),
+                trailing: const Icon(Icons.brightness_medium),
+                onTap: () => _showThemeModeDialog(context, themeProvider),
+              ),
+            ],
           ),
-
-          ListTile(
-            title: const Text('主题颜色'),
-            subtitle: Text('当前色值: #${themeProvider.seedColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}'),
-            trailing: CircleAvatar(
-              backgroundColor: themeProvider.seedColor,
-              radius: 12,
-            ),
-            onTap: () => _showColorPicker(context, themeProvider),
-          ),
-          ListTile(
-            title: const Text('外观模式'),
-            subtitle: Text(themeProvider.themeMode == ThemeMode.system ? '跟随系统' : (themeProvider.themeMode == ThemeMode.light ? '浅色模式' : '深色模式')),
-            trailing: const Icon(Icons.brightness_medium),
-            onTap: () => _showThemeModeDialog(context, themeProvider),
-          ),
-
-          const Divider(),
 
           // --- 分组 2: AI 与写作 ---
-          const _SectionHeader(title: 'AI 与写作'),
-          ListTile(
-            title: const Text('AI 引擎配置'),
-            subtitle: const Text('设置 API Key 与模型参数'),
-            leading: const Icon(Icons.smart_toy_outlined),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(context, MonetPageRoute(builder: (_) => const AiConfigPage()));
-            },
+          group(
+            title: 'AI 与写作',
+            tiles: [
+              ListTile(
+                title: const Text('AI 引擎配置'),
+                subtitle: const Text('设置 API Key 与模型参数'),
+                leading: const Icon(Icons.smart_toy_outlined),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(context, MonetPageRoute(builder: (_) => const AiConfigPage()));
+                },
+              ),
+              ListTile(
+                title: const Text('AI 提示词管理'),
+                subtitle: const Text('自定义扩写、润色等指令模板'),
+                leading: const Icon(Icons.chat_outlined),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(context, MonetPageRoute(builder: (_) => const AiPromptsPage()));
+                },
+              ),
+            ],
           ),
-          ListTile(
-            title: const Text('AI 提示词管理'),
-            subtitle: const Text('自定义扩写、润色等指令模板'),
-            leading: const Icon(Icons.chat_outlined),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(context, MonetPageRoute(builder: (_) => const AiPromptsPage()));
-            },
-          ),
-
-          const Divider(),
 
           // --- 分组 3: 数据与备份 ---
-          const _SectionHeader(title: '数据与安全'),
-          ListTile(
-            title: const Text('数据备份与恢复'),
-            subtitle: const Text('导出本地数据或从备份还原'),
-            leading: const Icon(Icons.backup_outlined),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(context, MonetPageRoute(builder: (_) => const DataManagePage()));
-            },
+          group(
+            title: '数据与安全',
+            tiles: [
+              ListTile(
+                title: const Text('数据备份与恢复'),
+                subtitle: const Text('导出本地数据或从备份还原'),
+                leading: const Icon(Icons.backup_outlined),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(context, MonetPageRoute(builder: (_) => const DataManagePage()));
+                },
+              ),
+            ],
           ),
 
           const SizedBox(height: 30),
@@ -154,7 +197,7 @@ class SettingsPage extends StatelessWidget {
 
   // 多风格色盘选择
   void _showColorPicker(BuildContext context, ThemeProvider provider) {
-    final isFlat = context.read<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final isPaper = context.read<ThemeProvider>().isPaperOrParchment;
     final currentSeed = provider.seedColor;
     final goldenC = ThemeProvider.goldenAngleColors;
     final chineseC = ThemeProvider.chineseColors;
@@ -172,7 +215,7 @@ class SettingsPage extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('选择主题色', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
         content: SizedBox(
           width: double.maxFinite,
@@ -253,12 +296,12 @@ class SettingsPage extends StatelessWidget {
   }
 
   void _showThemeModeDialog(BuildContext context, ThemeProvider provider) {
-    final isFlat = context.read<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final isPaper = context.read<ThemeProvider>().isPaperOrParchment;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('选择外观模式'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -303,3 +346,4 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
+

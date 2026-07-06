@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 
 class TitleSystemDialog extends StatefulWidget {
-  final bool isFlat;
-  const TitleSystemDialog({super.key, required this.isFlat});
+  final bool isPaper;
+  const TitleSystemDialog({super.key, required this.isPaper});
 
   @override
   State<TitleSystemDialog> createState() => _TitleSystemDialogState();
@@ -65,7 +65,7 @@ class _TitleSystemDialogState extends State<TitleSystemDialog> {
 
     return Dialog(
       backgroundColor: user.currentTheme.backgroundColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 8.0 : 16.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 8.0 : 16.0)),
       child: Container(
         width: 520,
         constraints: BoxConstraints(
@@ -428,3 +428,4 @@ class _TitleSystemDialogState extends State<TitleSystemDialog> {
     return icons[idx.clamp(0, icons.length - 1)];
   }
 }
+

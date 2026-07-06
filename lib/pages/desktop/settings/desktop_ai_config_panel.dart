@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/services/ai_service.dart';
 
 class DesktopAiConfigPanel extends StatefulWidget {
-  final bool isFlat;
+  final bool isPaper;
   final WritingTheme currentTheme;
-  const DesktopAiConfigPanel({super.key, required this.isFlat, required this.currentTheme});
+  const DesktopAiConfigPanel({super.key, required this.isPaper, required this.currentTheme});
 
   @override
   State<DesktopAiConfigPanel> createState() => _DesktopAiConfigPanelState();
@@ -50,7 +50,7 @@ class _DesktopAiConfigPanelState extends State<DesktopAiConfigPanel> {
         Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: widget.currentTheme.textColor.withValues(alpha: 0.8))),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(color: widget.currentTheme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0), border: widget.isFlat ? Border.all(color: widget.currentTheme.textColor.withValues(alpha: 0.1)) : null),
+          decoration: BoxDecoration(color: widget.currentTheme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0), border: widget.isPaper ? Border.all(color: widget.currentTheme.textColor.withValues(alpha: 0.1)) : null),
           child: TextField(
             controller: controller,
             obscureText: isPassword && _isObscure,
@@ -82,7 +82,7 @@ class _DesktopAiConfigPanelState extends State<DesktopAiConfigPanel> {
             onPressed: _saveAiConfig,
             icon: const Icon(CupertinoIcons.check_mark, size: 16),
             label: const Text('保存配置'),
-            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0))),
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0))),
           ),
         )
       ],

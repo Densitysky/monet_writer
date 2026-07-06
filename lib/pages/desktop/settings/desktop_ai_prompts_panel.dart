@@ -1,12 +1,12 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 
 class DesktopAiPromptsPanel extends StatelessWidget {
-  final bool isFlat;
+  final bool isPaper;
   final WritingTheme currentTheme;
   final Color primaryColor;
 
-  const DesktopAiPromptsPanel({super.key, required this.isFlat, required this.currentTheme, required this.primaryColor});
+  const DesktopAiPromptsPanel({super.key, required this.isPaper, required this.currentTheme, required this.primaryColor});
 
   Widget _buildPromptCard(String title, String content) {
     return Container(
@@ -14,7 +14,7 @@ class DesktopAiPromptsPanel extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: currentTheme.backgroundColor,
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0),
         border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.08)),
       ),
       child: Column(

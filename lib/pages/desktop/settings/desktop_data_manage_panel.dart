@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:monet_writer/services/database_service.dart'; // 【已解封导入】
 import 'package:monet_writer/providers/user_provider.dart';
 
 class DesktopDataManagePanel extends StatefulWidget {
-  final bool isFlat;
+  final bool isPaper;
   final WritingTheme currentTheme;
   final Color primaryColor;
 
   const DesktopDataManagePanel({
     super.key,
-    required this.isFlat,
+    required this.isPaper,
     required this.currentTheme,
     required this.primaryColor
   });
@@ -73,7 +73,7 @@ class _DesktopDataManagePanelState extends State<DesktopDataManagePanel> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: widget.currentTheme.backgroundColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 16.0)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 16.0)),
           title: Row(
             children: [
               const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.redAccent),
@@ -109,7 +109,7 @@ class _DesktopDataManagePanelState extends State<DesktopDataManagePanel> {
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
             backgroundColor: widget.currentTheme.backgroundColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 16.0)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 16.0)),
             title: Text('✅ 涅槃重生', style: TextStyle(color: widget.currentTheme.textColor, fontWeight: FontWeight.bold)),
             content: Text('数据已成功恢复！为了确保界面状态绝对安全，请您手动关闭并重新启动应用程序。', style: TextStyle(color: widget.currentTheme.textColor.withValues(alpha: 0.8))),
             actions: [
@@ -155,12 +155,12 @@ class _DesktopDataManagePanelState extends State<DesktopDataManagePanel> {
     final color = isDanger ? Colors.redAccent : widget.primaryColor;
     return InkWell(
       onTap: _isProcessing ? null : onTap,
-      borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 12.0),
+      borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 12.0),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 12.0),
+          borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 12.0),
           border: Border.all(color: color.withValues(alpha: 0.1)),
         ),
         child: Row(

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import 'package:monet_writer/providers/theme_provider.dart';
@@ -6,8 +6,8 @@ import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/utils/color_generator.dart';
 
 class DesktopColorPickerPanel extends StatelessWidget {
-  final bool isFlat;
-  const DesktopColorPickerPanel({super.key, required this.isFlat});
+  final bool isPaper;
+  const DesktopColorPickerPanel({super.key, required this.isPaper});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,7 @@ class DesktopColorPickerPanel extends StatelessWidget {
                     shape: BoxShape.circle,
                     // 【优化】：选中外边框也同步变色，确保在极浅色背景下外圈依然清晰
                     border: isSelected ? Border.all(color: wcagColor, width: 2) : null,
-                    boxShadow: isFlat ? null : [BoxShadow(color: c.withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 3))],
+                    boxShadow: isPaper ? null : [BoxShadow(color: c.withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 3))],
                   ),
                 ),
                 // 【核心升级】：打勾图标智能适配 WCAG 标准
