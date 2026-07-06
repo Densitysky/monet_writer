@@ -93,9 +93,10 @@ class AiService {
     final cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
     final url = cleanBaseUrl.endsWith('v1') ? '$cleanBaseUrl/models' : '$cleanBaseUrl/v1/models';
 
+    final isMiMo = config.provider == 'mimo';
     final response = await http.get(
       Uri.parse(url),
-      headers: {'Authorization': 'Bearer ${config.apiKey}'},
+      headers: {if (isMiMo) 'api-key': config.apiKey else 'Authorization': 'Bearer ${config.apiKey}'},
     ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
@@ -136,11 +137,12 @@ class AiService {
     final cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
     final url = '$cleanBaseUrl/chat/completions';
 
+    final isMiMo = config.provider == 'mimo';
     final response = await http.post(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${config.apiKey}',
+        if (isMiMo) 'api-key': config.apiKey else 'Authorization': 'Bearer ${config.apiKey}',
       },
       body: jsonEncode({
         "model": config.modelName,

@@ -8,9 +8,23 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:monet_writer/services/database_service.dart';
 
+/// 写作页面（编辑器）的阅读/写作配色主题。
+///
+/// 与 [ThemeProvider]（系统设置中的 AppThemeStyle）是**两套独立体系**：
+/// - WritingTheme → 写作页编辑器背景/文字/光标色
+/// - ThemeProvider → 全局 Material UI 组件样式（卡片/按钮/对话框/导航栏）
+///
+/// 字段说明：
+/// - [backgroundColor]：写作页编辑器背景色（仅影响写作页面，不影响系统 UI）
+/// - [textColor]：写作页正文字体色
+/// - [cursorColor]：光标颜色
+/// - [outlineColor]：编辑器内分隔线色
 class WritingTheme {
   final String name;
+
+  /// 【写作页专用】编辑器背景色。非系统主题背景，不要与其他页面的 ThemeData.scaffoldBackgroundColor 混淆。
   final Color backgroundColor;
+
   final Color textColor;
   final Color cursorColor;
   final Color outlineColor;
@@ -36,6 +50,8 @@ class UserProvider extends ChangeNotifier {
   double _lineHeight = 1.8;
   // 【新增】：全局段落间距变量，默认 16.0 像素的呼吸感
   double _paragraphSpacing = 16.0;
+  int _immersiveTitleStyle = 1; // 0=极简 1=细线 2=角标 3=日式 4=卡片
+  int _desktopImmersiveStyle = 0; // 0=纸页画布 1=聚焦光束 2=氛围光晕 3=打字机 4=工作室
   String _fontFamily = 'System';
   String? _customFontPath;
   int _themeIndex = 0;
@@ -90,12 +106,30 @@ class UserProvider extends ChangeNotifier {
   }
   // ==========================================================
 
+  // ═══════════════════════════════════════════════════════════
+  // 写作主题列表
+  //
+  // 设计原则（借鉴 Material Color Utilities HCT 体系）：
+  // HCT = Hue(0-360) + Chroma(0-∞) + Tone(0-100)
+  // 核心思想：从单一 seed color 沿 Tone 轴派生整条调色板。
+  // - TonalPalette: 固定 Hue+Chroma，Tone 0→100 生成 13 个层级
+  // - light scheme: background=T99, surface=T99, primary=T40, outline=T50
+  // - 每个辅助色（分隔线、阴影、禁用色）不是随意搭配，而是同一个 hue
+  //   在不同 tone 下的自然变体，确保视觉和谐。
+  //
+  // 对本项目的实践意义：
+  // 新增主题时，在定义主色后，辅助色（outlineColor、阴影透明度）
+  // 应沿主色的 Hue 方向推导，避免引入冲突色相。
+  // ═══════════════════════════════════════════════════════════
   static const List<WritingTheme> themes = [
     WritingTheme('默认白', Color(0xFFFAFAFA), Colors.black87),
     WritingTheme('护眼绿', Color(0xFFE8F5E9), Color(0xFF2E7D32)),
     WritingTheme('羊皮纸', Color(0xFFFDF5E6), Color(0xFF5D4037)),
     WritingTheme('暗夜黑', Color(0xFF1E1E1E), Color(0xFFB0BEC5), cursorColor: Colors.white, outlineColor: Colors.grey),
     WritingTheme('深海蓝', Color(0xFF102027), Color(0xFFCFD8DC), cursorColor: Colors.cyan),
+    WritingTheme('Soft UI', Color(0xFFEBECED), Color(0xFF2C2C2E),
+        cursorColor: Color(0xFF8E8E93),
+        outlineColor: Color(0xFFC6C6C8)),
   ];
 
   String get nickname => _nickname;
@@ -112,6 +146,8 @@ class UserProvider extends ChangeNotifier {
   double get lineHeight => _lineHeight;
   // 【新增】：对外暴漏 Getter
   double get paragraphSpacing => _paragraphSpacing;
+  int get immersiveTitleStyle => _immersiveTitleStyle;
+  int get desktopImmersiveStyle => _desktopImmersiveStyle;
   String get fontFamily => _fontFamily;
 
   /// 返回可直接用于 TextStyle.fontFamily 的有效字体族
@@ -153,6 +189,8 @@ class UserProvider extends ChangeNotifier {
     _lineHeight = prefs.getDouble('setting_line_height') ?? 1.8;
     // 【新增】：启动时从本地磁盘加载用户设定的段距
     _paragraphSpacing = prefs.getDouble('setting_paragraph_spacing') ?? 16.0;
+    _immersiveTitleStyle = prefs.getInt('setting_immersive_title_style') ?? 1;
+    _desktopImmersiveStyle = prefs.getInt('setting_desktop_immersive_style') ?? 0;
     _fontFamily = prefs.getString('setting_font_family') ?? 'System';
     _customFontPath = prefs.getString('setting_font_path');
     _themeIndex = prefs.getInt('setting_theme_index') ?? 0;
@@ -228,6 +266,20 @@ class UserProvider extends ChangeNotifier {
   Future<void> setFontSize(double size) => updateWritingConfig(fontSize: size);
   Future<void> setLineHeight(double height) => updateWritingConfig(lineHeight: height);
   Future<void> setParagraphSpacing(double spacing) => updateWritingConfig(paragraphSpacing: spacing);
+
+  Future<void> setImmersiveTitleStyle(int style) async {
+    _immersiveTitleStyle = style;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('setting_immersive_title_style', style);
+  }
+
+  Future<void> setDesktopImmersiveStyle(int style) async {
+    _desktopImmersiveStyle = style;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('setting_desktop_immersive_style', style);
+  }
 
   Future<void> setFontFamily(String font) async {
     _fontFamily = font;
