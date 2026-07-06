@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -53,7 +53,7 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
     }
   }
 
-  void _showRestoreDialog(ChapterHistory history, bool isFlat) {
+  void _showRestoreDialog(ChapterHistory history, bool isPaper) {
     final userProvider = context.read<UserProvider>();
     final theme = userProvider.currentTheme;
     final timeStr = DateFormat('yyyy-MM-dd HH:mm:ss').format(history.timestamp);
@@ -61,7 +61,7 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)), // 【动态圆角】
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)), // 【动态圆角】
         backgroundColor: theme.backgroundColor,
         title: Text('恢复历史版本',
             style: TextStyle(color: theme.textColor, fontSize: 18, fontWeight: FontWeight.bold)),
@@ -81,8 +81,8 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: theme.textColor.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), // 【动态圆角】
-                  border: isFlat ? null : Border.all(color: theme.textColor.withValues(alpha: 0.1)), // 极简风不要边框
+                  borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), // 【动态圆角】
+                  border: isPaper ? null : Border.all(color: theme.textColor.withValues(alpha: 0.1)), // 纸感风不要边框
                 ),
                 constraints: const BoxConstraints(maxHeight: 200),
                 child: SingleChildScrollView(
@@ -178,18 +178,18 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
     final theme = userProvider.currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat; // 【动态判断】
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper; // 【动态判断】
 
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
       decoration: BoxDecoration(
         color: theme.backgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 20.0)), // 【动态抹平顶部】
+        borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 20.0)), // 【动态抹平顶部】
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!isFlat) // 【极简风隐藏拖拽条】
+          if (!isPaper) // 【纸感风隐藏拖拽条】
             Column(
               children: [
                 const SizedBox(height: 12),
@@ -212,10 +212,10 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
                 right: 16,
                 child: InkWell(
                   onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0), // 【动态圆角】
+                  borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0), // 【动态圆角】
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                    decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                     child: Icon(CupertinoIcons.xmark, size: 20, color: theme.textColor.withValues(alpha: 0.6)),
                   ),
                 ),
@@ -266,7 +266,7 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
                 final diffColor = diff > 0 ? Colors.green : (diff < 0 ? Colors.redAccent : Colors.grey);
 
                 return InkWell(
-                  onTap: () => _showRestoreDialog(history, isFlat),
+                  onTap: () => _showRestoreDialog(history, isPaper),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     child: Row(
@@ -294,7 +294,7 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
                             const SizedBox(height: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(color: diffColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 6.0)), // 【动态圆角】
+                              decoration: BoxDecoration(color: diffColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 6.0)), // 【动态圆角】
                               child: Text(diffStr, style: TextStyle(color: diffColor, fontSize: 11, fontWeight: FontWeight.bold)),
                             ),
                           ],
@@ -311,3 +311,4 @@ class _HistoryBottomSheetState extends State<HistoryBottomSheet> {
     );
   }
 }
+

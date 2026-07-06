@@ -10,11 +10,10 @@ class MonetRichEditor extends StatelessWidget {
   final FocusNode focusNode;
   final String hintText;
   final EdgeInsetsGeometry padding;
-
-  // 【核心升级】：新增滚动相关的控制权暴露
   final ScrollController? scrollController;
   final bool scrollable;
   final bool expands;
+  final void Function(String selectedText)? onAiTap;
 
   const MonetRichEditor({
     super.key,
@@ -23,8 +22,9 @@ class MonetRichEditor extends StatelessWidget {
     this.hintText = '从这里开始你的故事...',
     this.padding = EdgeInsets.zero,
     this.scrollController,
-    this.scrollable = false, // 桌面端默认 false，跟随外部 ListView
-    this.expands = false,    // 桌面端默认 false
+    this.scrollable = false,
+    this.expands = false,
+    this.onAiTap,
   });
 
   @override
@@ -46,10 +46,11 @@ class MonetRichEditor extends StatelessWidget {
       scrollController: scrollController ?? ScrollController(),
       config: QuillEditorConfig(
         autoFocus: false,
-        expands: expands,       // 【接收外部指令】：是否撑满高度
-        scrollable: scrollable, // 【接收外部指令】：是否内部自驱滚动
+        expands: expands,
+        scrollable: scrollable,
         padding: padding,
         placeholder: hintText,
+        contextMenuBuilder: (context, state) => _buildContextMenu(context, state, onAiTap),
         customStyles: DefaultStyles(
           paragraph: DefaultTextBlockStyle(
             defaultTextStyle,
@@ -66,6 +67,35 @@ class MonetRichEditor extends StatelessWidget {
             null,
           ),
         ),
+      ),
+    );
+  }
+
+  static Widget _buildContextMenu(
+    BuildContext context,
+    QuillRawEditorState state,
+    void Function(String selectedText)? onAiTap,
+  ) {
+    final sel = state.textEditingValue.selection;
+    final hasSel = sel.isValid && !sel.isCollapsed;
+
+    final items = <ContextMenuButtonItem>[];
+
+    if (hasSel) {
+      items.add(ContextMenuButtonItem(
+        label: 'AI 润色',
+        onPressed: () {
+          onAiTap?.call(sel.textInside(state.textEditingValue.text));
+        },
+      ));
+    }
+
+    items.addAll(state.contextMenuButtonItems);
+
+    return TextFieldTapRegion(
+      child: AdaptiveTextSelectionToolbar.buttonItems(
+        buttonItems: items,
+        anchors: state.contextMenuAnchors,
       ),
     );
   }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -50,7 +50,7 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
 
   void _showSettingsSheet() {
     final theme = context.read<UserProvider>().currentTheme;
-    final isFlat = context.read<ThemeProvider>().themeStyle == AppThemeStyle.flat; // 【获取极简风状态】
+    final isPaper = context.read<ThemeProvider>().themeStyle == AppThemeStyle.paper; // 【获取纸感风状态】
     final TextEditingController customController = TextEditingController();
 
     showModalBottomSheet(
@@ -62,12 +62,12 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
           padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
           decoration: BoxDecoration(
             color: theme.backgroundColor,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 20.0)), // 【动态圆角】
+            borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 20.0)), // 【动态圆角】
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (!isFlat) // 【极简风隐藏灰色拖拽条】
+              if (!isPaper) // 【纸感风隐藏灰色拖拽条】
                 Column(
                   children: [
                     const SizedBox(height: 12),
@@ -90,10 +90,10 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
                     right: 16,
                     child: InkWell(
                       onTap: () => Navigator.pop(ctx),
-                      borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0), // 【动态圆角】
+                      borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0), // 【动态圆角】
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                        decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                         child: Icon(CupertinoIcons.xmark, size: 20, color: theme.textColor.withValues(alpha: 0.6)),
                       ),
                     ),
@@ -116,13 +116,13 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
                         final isCurrent = goal == _targetGoal;
                         return InkWell(
                           onTap: () => _setGoal(goal),
-                          borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), // 【动态圆角】
+                          borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), // 【动态圆角】
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
                               color: isCurrent ? Colors.green.withValues(alpha: 0.15) : theme.textColor.withValues(alpha: 0.05),
                               border: Border.all(color: isCurrent ? Colors.green : Colors.transparent),
-                              borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), // 【动态圆角】
+                              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), // 【动态圆角】
                             ),
                             child: Text(
                               '$goal',
@@ -151,7 +151,7 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
                               hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                               filled: true,
                               fillColor: theme.textColor.withValues(alpha: 0.05),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), borderSide: BorderSide.none), // 【动态圆角】
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), borderSide: BorderSide.none), // 【动态圆角】
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             ),
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -165,7 +165,7 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
                           },
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)), // 【动态圆角】
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)), // 【动态圆角】
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                           ),
                           child: const Text('确定', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -188,7 +188,7 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
     if (_isLoading) return const SizedBox(width: 60);
 
     final theme = context.watch<UserProvider>().currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat; // 【动态判断圆角】
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper; // 【动态判断圆角】
 
     double progress = (widget.currentWordCount / _targetGoal).clamp(0.0, 1.0);
     bool isDone = progress >= 1.0;
@@ -197,7 +197,7 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
 
     return InkWell(
       onTap: _showSettingsSheet,
-      borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), // 【动态圆角】
+      borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), // 【动态圆角】
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Row(
@@ -242,3 +242,4 @@ class _WordGoalWidgetState extends State<WordGoalWidget> {
     );
   }
 }
+

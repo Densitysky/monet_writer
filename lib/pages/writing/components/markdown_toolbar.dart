@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:monet_writer/utils/provider_select_ext.dart';
 import 'package:monet_writer/utils/monet_animations.dart';
 
@@ -45,14 +45,14 @@ class MarkdownToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentTheme = context.selectCurrentTheme;
-    final isFlat = context.selectIsFlat;
+    final isPaper = context.selectIsPaper;
 
     return Container(
       height: 40,
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: currentTheme.textColor.withValues(alpha: 0.05), // 高级透明底色
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), // 动态圆角
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), // 动态圆角
         // 【已修复】已彻底删除导致报错的 border 属性，在扁平风下保持纯净的无框色块即可
       ),
       child: Row(
@@ -89,3 +89,4 @@ class MarkdownToolbar extends StatelessWidget {
     );
   }
 }
+

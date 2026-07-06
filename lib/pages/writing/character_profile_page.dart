@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -205,7 +205,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currentTheme = context.watch<UserProvider>().currentTheme; // 阅读主题（提供背景色和文字色）
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat; // 视觉风格
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper; // 视觉风格
     final provider = context.watch<WritingProvider>();
 
     final isAnalyzing = provider.isAnalyzing(_nameCtrl.text);
@@ -299,7 +299,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
                   height: 54,
                   decoration: BoxDecoration(
                     color: currentTheme.backgroundColor, // 资料卡底色
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 30.0)), // 现代风大圆角，极简风直角
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 30.0)), // 现代风大圆角，纸感风直角
                   ),
                   child: TabBar(
                     controller: _tabController,
@@ -322,8 +322,8 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildBasicInfoTab(theme, currentTheme, isFlat),
-                _buildBioTab(theme, currentTheme, isFlat),
+                _buildBasicInfoTab(theme, currentTheme, isPaper),
+                _buildBioTab(theme, currentTheme, isPaper),
               ],
             ),
           ),
@@ -337,14 +337,14 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
           label: Text('AI 分析中...', style: TextStyle(color: currentTheme.textColor)),
           backgroundColor: currentTheme.textColor.withValues(alpha: 0.05),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)),
         )
-            : _buildFab(theme, isFlat),
+            : _buildFab(theme, isPaper),
       ),
     );
   }
 
-  Widget _buildFab(ThemeData theme, bool isFlat) {
+  Widget _buildFab(ThemeData theme, bool isPaper) {
     return AnimatedBuilder(
       animation: _tabController,
       builder: (context, child) {
@@ -356,17 +356,17 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
               FloatingActionButton.small(
                 heroTag: 'fab_ai_sync',
                 onPressed: _syncWithAi,
-                elevation: isFlat ? 0 : 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)),
+                elevation: isPaper ? 0 : 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)),
                 backgroundColor: theme.colorScheme.secondaryContainer,
                 child: const Icon(Icons.auto_awesome),
               ),
               const SizedBox(height: 12),
               FloatingActionButton.extended(
                 heroTag: 'fab_add_event',
-                onPressed: () => _showEventEditDialog(context, isFlat: isFlat),
-                elevation: isFlat ? 0 : 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)),
+                onPressed: () => _showEventEditDialog(context, isPaper: isPaper),
+                elevation: isPaper ? 0 : 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)),
                 icon: const Icon(Icons.add),
                 label: const Text('添加经历'),
               ),
@@ -376,8 +376,8 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
           return FloatingActionButton.extended(
             heroTag: 'fab_ai_sync_main',
             onPressed: _syncWithAi,
-            elevation: isFlat ? 0 : 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)),
+            elevation: isPaper ? 0 : 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)),
             backgroundColor: theme.colorScheme.primaryContainer,
             icon: const Icon(Icons.auto_awesome),
             label: const Text('AI 同步'),
@@ -396,7 +396,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
     int? minLines,
     IconData? icon,
     required WritingTheme currentTheme,
-    required bool isFlat,
+    required bool isPaper,
     ValueChanged<String>? onChanged,
   }) {
     return Column(
@@ -428,7 +428,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
             fillColor: currentTheme.textColor.withValues(alpha: 0.05), // 高级感色块
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0), // 动态圆角
+              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0), // 动态圆角
               borderSide: BorderSide.none, // 永远不要边框
             ),
           ),
@@ -437,7 +437,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
     );
   }
 
-  Widget _buildBasicInfoTab(ThemeData theme, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildBasicInfoTab(ThemeData theme, WritingTheme currentTheme, bool isPaper) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
       children: [
@@ -446,7 +446,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
           label: '角色姓名',
           icon: Icons.person_outline,
           currentTheme: currentTheme,
-          isFlat: isFlat,
+          isPaper: isPaper,
           onChanged: (_) => setState((){}),
         ),
         const SizedBox(height: 24),
@@ -457,7 +457,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
           hint: '例如：深藏不露的扫地僧，表面贪财实则重情重义...',
           maxLines: 3,
           currentTheme: currentTheme,
-          isFlat: isFlat,
+          isPaper: isPaper,
         ),
         const SizedBox(height: 32),
         Row(
@@ -467,12 +467,12 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
             Text('角色标签', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: currentTheme.textColor.withValues(alpha: 0.5))),
             const Spacer(),
             BouncingWidget(
-              onTap: () => _showAddTagDialog(isFlat, currentTheme),
+              onTap: () => _showAddTagDialog(isPaper, currentTheme),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0),
+                  borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0),
                 ),
                 child: Row(
                   children: [
@@ -497,7 +497,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
               backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1), // 水彩风底色
               deleteIconColor: theme.colorScheme.primary,
               side: BorderSide.none, // 无边框
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)),
               onDeleted: () => setState(() => _tags.remove(tag)),
             )).toList(),
           ),
@@ -505,7 +505,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
     );
   }
 
-  Widget _buildBioTab(ThemeData theme, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildBioTab(ThemeData theme, WritingTheme currentTheme, bool isPaper) {
     final provider = context.watch<WritingProvider>();
     final char = _getCurrentCharacter(provider);
     final events = char?.lifeEvents ?? [];
@@ -526,7 +526,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
                   maxLines: null,
                   minLines: 5,
                   currentTheme: currentTheme,
-                  isFlat: isFlat,
+                  isPaper: isPaper,
                 ),
                 const SizedBox(height: 32),
                 Row(
@@ -581,11 +581,11 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
                             elevation: 0,
                             color: currentTheme.textColor.withValues(alpha: 0.05), // 高级色块
                             margin: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0), side: BorderSide.none),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0), side: BorderSide.none),
                             child: InkWell(
-                              onTap: () => _showEventEditDialog(context, event: event, index: index, isFlat: isFlat),
+                              onTap: () => _showEventEditDialog(context, event: event, index: index, isPaper: isPaper),
                               onLongPress: () => _confirmDeleteEvent(context, index),
-                              borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
+                              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Column(
@@ -599,7 +599,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
                                               color: theme.colorScheme.primaryContainer,
-                                              borderRadius: BorderRadius.circular(isFlat ? 2.0 : 6.0),
+                                              borderRadius: BorderRadius.circular(isPaper ? 2.0 : 6.0),
                                             ),
                                             child: Text(
                                               event.timePoint!,
@@ -643,12 +643,12 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
     );
   }
 
-  void _showAddTagDialog(bool isFlat, WritingTheme currentTheme) {
+  void _showAddTagDialog(bool isPaper, WritingTheme currentTheme) {
     _tagInputCtrl.clear();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         title: const Text('添加专属标签'),
         content: TextField(
           controller: _tagInputCtrl,
@@ -657,13 +657,13 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
             hintText: '例如：火系 / 腹黑',
             filled: true,
             fillColor: currentTheme.textColor.withValues(alpha: 0.05),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), borderSide: BorderSide.none),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), borderSide: BorderSide.none),
           ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0))),
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0))),
             onPressed: () {
               if (_tagInputCtrl.text.isNotEmpty) {
                 setState(() => _tags.add(_tagInputCtrl.text));
@@ -677,7 +677,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
     );
   }
 
-  void _showEventEditDialog(BuildContext context, {CharacterEvent? event, int? index, required bool isFlat}) {
+  void _showEventEditDialog(BuildContext context, {CharacterEvent? event, int? index, required bool isPaper}) {
     final titleCtrl = TextEditingController(text: event?.title);
     final contentCtrl = TextEditingController(text: event?.content);
     final timeCtrl = TextEditingController(text: event?.timePoint);
@@ -692,7 +692,7 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
       builder: (ctx) => Container(
         decoration: BoxDecoration(
             color: currentTheme.backgroundColor,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 24.0))
+            borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 24.0))
         ),
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
         child: Column(
@@ -705,22 +705,22 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
               children: [
                 SizedBox(
                   width: 100,
-                  child: _buildDossierInput(controller: timeCtrl, label: '时间点', hint: '如: 18岁', currentTheme: currentTheme, isFlat: isFlat),
+                  child: _buildDossierInput(controller: timeCtrl, label: '时间点', hint: '如: 18岁', currentTheme: currentTheme, isPaper: isPaper),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildDossierInput(controller: titleCtrl, label: '事件概要', hint: '如: 拜入宗门', currentTheme: currentTheme, isFlat: isFlat),
+                  child: _buildDossierInput(controller: titleCtrl, label: '事件概要', hint: '如: 拜入宗门', currentTheme: currentTheme, isPaper: isPaper),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            _buildDossierInput(controller: contentCtrl, label: '详细描述', hint: '发生了什么...', maxLines: 3, minLines: 3, currentTheme: currentTheme, isFlat: isFlat),
+            _buildDossierInput(controller: contentCtrl, label: '详细描述', hint: '发生了什么...', maxLines: 3, minLines: 3, currentTheme: currentTheme, isPaper: isPaper),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 50,
               child: FilledButton(
-                style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0))),
+                style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0))),
                 onPressed: () {
                   if (titleCtrl.text.isNotEmpty) {
                     final provider = context.read<WritingProvider>();
@@ -774,3 +774,4 @@ class _CharacterProfilePageState extends State<CharacterProfilePage> with Single
     );
   }
 }
+

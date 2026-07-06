@@ -140,6 +140,11 @@ mixin WritingChapterMixin on WritingProviderBase {
       await _isar.books.put(book);
     });
     notifyListeners();
+
+    // 空章节光标定位到标题
+    if ((chapter.content == null || chapter.content!.isEmpty) && (chapter.contentDelta == null || chapter.contentDelta!.isEmpty)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => titleFocusNode.requestFocus());
+    }
   }
 
   Future<void> switchChapter(Chapter chapter) => selectChapter(chapter);

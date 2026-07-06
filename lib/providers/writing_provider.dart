@@ -59,6 +59,7 @@ abstract class WritingProviderBase extends ChangeNotifier {
   // 【核心修改】：替换为新引擎控制器，并添加焦点管理
   late final MonetEditorController contentController;
   final FocusNode editorFocusNode = FocusNode();
+  final FocusNode titleFocusNode = FocusNode();
 
   final UndoHistoryController undoController = UndoHistoryController();
   final ScrollController scrollController = ScrollController();
@@ -72,6 +73,7 @@ abstract class WritingProviderBase extends ChangeNotifier {
     scrollController.dispose();
     contentController.dispose();
     editorFocusNode.dispose();
+    titleFocusNode.dispose();
     titleController.dispose();
     undoController.dispose();
     _debounceTimer?.cancel();
@@ -107,6 +109,9 @@ abstract class WritingProviderBase extends ChangeNotifier {
   Future<void> selectChapter(Chapter chapter);
   Future<void> createChapter(String title);
   Future<String> getRecentContent({int limit = 5});
+
+  Future<bool> smartCopyCurrentChapter();
+  void insertSceneSeparator();
 
   Future<void> batchAddCharacters(List<dynamic> charList);
 }

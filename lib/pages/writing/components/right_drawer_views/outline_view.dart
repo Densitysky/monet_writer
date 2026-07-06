@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
@@ -178,7 +178,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     final provider = context.watch<WritingProvider>();
     final currentTheme = context.watch<UserProvider>().currentTheme;
 
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -197,14 +197,14 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
                     height: 40,
                     decoration: BoxDecoration(
                       color: currentTheme.textColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0),
+                      borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0),
                     ),
                     child: TabBar(
                       controller: _mainTabController,
                       indicatorSize: TabBarIndicatorSize.tab,
                       indicator: BoxDecoration(
                         color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0),
+                        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0),
                       ),
                       labelColor: theme.colorScheme.onPrimary,
                       unselectedLabelColor: currentTheme.textColor.withValues(alpha: 0.6),
@@ -228,8 +228,8 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
             child: TabBarView(
               controller: _mainTabController,
               children: [
-                _buildMacroPage(context, provider, theme, currentTheme, isFlat),
-                _buildPlotPage(context, provider, theme, currentTheme, isFlat),
+                _buildMacroPage(context, provider, theme, currentTheme, isPaper),
+                _buildPlotPage(context, provider, theme, currentTheme, isPaper),
               ],
             ),
           ),
@@ -239,20 +239,20 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
           ? FloatingActionButton.small(
         onPressed: null,
         backgroundColor: currentTheme.textColor.withValues(alpha: 0.05),
-        shape: isFlat ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)) : null,
+        shape: isPaper ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)) : null,
         child: const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
       )
           : FloatingActionButton.small(
         onPressed: _handleAiAction,
         tooltip: 'AI 自动生成/补全',
         backgroundColor: theme.colorScheme.primaryContainer,
-        shape: isFlat ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)) : null,
+        shape: isPaper ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)) : null,
         child: const Icon(Icons.auto_awesome),
       ),
     );
   }
 
-  Widget _buildMacroPage(BuildContext context, WritingProvider provider, ThemeData theme, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildMacroPage(BuildContext context, WritingProvider provider, ThemeData theme, WritingTheme currentTheme, bool isPaper) {
     final tabs = provider.book.settingsTabs ?? [];
 
     return Column(
@@ -266,7 +266,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
             children: [
               IconButton(
                 icon: Icon(Icons.menu, color: currentTheme.textColor),
-                onPressed: () => _showAllTabsMenu(context, provider, tabs, isFlat),
+                onPressed: () => _showAllTabsMenu(context, provider, tabs, isPaper),
                 tooltip: '查看所有设定',
               ),
               VerticalDivider(width: 1, indent: 10, endIndent: 10, color: currentTheme.textColor.withValues(alpha: 0.1)),
@@ -276,18 +276,18 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   children: [
-                    _buildChip(0, '核心', Icons.dashboard, theme, currentTheme, isFlat),
+                    _buildChip(0, '核心', Icons.dashboard, theme, currentTheme, isPaper),
                     ...List.generate(tabs.length, (index) {
                       final tab = tabs[index];
                       return GestureDetector(
-                        onLongPress: () => _showTabMenu(context, provider, index, tab, isFlat),
+                        onLongPress: () => _showTabMenu(context, provider, index, tab, isPaper),
                         child: _buildChip(
                             index + 1,
                             tab.title ?? '未命名',
                             tab.type == OutlineType.text ? Icons.description : Icons.list_alt,
                             theme,
                             currentTheme,
-                            isFlat
+                            isPaper
                         ),
                       );
                     }),
@@ -296,10 +296,10 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: IconButton.filledTonal(
                         icon: const Icon(Icons.add, size: 18),
-                        onPressed: () => _showCreateTabDialog(context, provider, isFlat),
+                        onPressed: () => _showCreateTabDialog(context, provider, isPaper),
                         style: IconButton.styleFrom(
                             visualDensity: VisualDensity.compact,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0))
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0))
                         ),
                       ),
                     ),
@@ -312,18 +312,18 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
 
         Expanded(
           child: _selectedMacroIndex == 0
-              ? _buildCoreView(theme, currentTheme, isFlat)
-              : _buildCustomTabView(provider, tabs, theme, currentTheme, isFlat),
+              ? _buildCoreView(theme, currentTheme, isPaper)
+              : _buildCustomTabView(provider, tabs, theme, currentTheme, isPaper),
         ),
       ],
     );
   }
 
-  void _showAllTabsMenu(BuildContext context, WritingProvider provider, List<OutlineTab> tabs, bool isFlat) {
+  void _showAllTabsMenu(BuildContext context, WritingProvider provider, List<OutlineTab> tabs, bool isPaper) {
     showModalBottomSheet(
       context: context,
-      showDragHandle: !isFlat,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 24.0))),
+      showDragHandle: !isPaper,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 24.0))),
       builder: (ctx) => SizedBox(
         height: 300,
         child: Column(
@@ -340,14 +340,14 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
                 children: [
-                  _buildGridItem(ctx, 0, '核心', Icons.dashboard, Colors.blue, isFlat, currentTheme: context.read<UserProvider>().currentTheme),
+                  _buildGridItem(ctx, 0, '核心', Icons.dashboard, Colors.blue, isPaper, currentTheme: context.read<UserProvider>().currentTheme),
                   ...List.generate(tabs.length, (i) {
                     final tab = tabs[i];
                     return _buildGridItem(
                         ctx, i + 1, tab.title ?? '',
                         tab.type == OutlineType.text ? Icons.description : Icons.list_alt,
                         Colors.indigo,
-                        isFlat,
+                        isPaper,
                         currentTheme: context.read<UserProvider>().currentTheme
                     );
                   })
@@ -360,7 +360,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildGridItem(BuildContext ctx, int index, String label, IconData icon, Color color, bool isFlat, {required WritingTheme currentTheme}) {
+  Widget _buildGridItem(BuildContext ctx, int index, String label, IconData icon, Color color, bool isPaper, {required WritingTheme currentTheme}) {
     final isSelected = _selectedMacroIndex == index;
     return InkWell(
       onTap: () {
@@ -371,11 +371,11 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
           _loadCustomTabContent();
         });
       },
-      borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0),
+      borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0),
       child: Container(
         decoration: BoxDecoration(
           color: isSelected ? color.withValues(alpha: 0.1) : currentTheme.textColor.withValues(alpha: 0.05), // 【彻底删除边框】改用底色区分层级
-          borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0),
+          borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0),
         ),
         alignment: Alignment.center,
         child: Row(
@@ -390,7 +390,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildChip(int index, String label, IconData icon, ThemeData theme, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildChip(int index, String label, IconData icon, ThemeData theme, WritingTheme currentTheme, bool isPaper) {
     final isSelected = _selectedMacroIndex == index;
     return Padding(
       padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
@@ -409,14 +409,14 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
           });
         },
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0),
+            borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0),
             side: BorderSide.none // 【彻底删除边框】
         ),
       ),
     );
   }
 
-  Widget _buildCoreView(ThemeData theme, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildCoreView(ThemeData theme, WritingTheme currentTheme, bool isPaper) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -427,7 +427,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
           controller: _descCtrl,
           maxLines: 3,
           style: TextStyle(color: currentTheme.textColor),
-          decoration: _inputDeco(theme, currentTheme, '一句话讲清楚：谁？要干什么？阻碍是什么？', isFlat),
+          decoration: _inputDeco(theme, currentTheme, '一句话讲清楚：谁？要干什么？阻碍是什么？', isPaper),
           onChanged: (_) => _isDirty = true,
         ),
         const SizedBox(height: 24),
@@ -439,7 +439,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
           maxLines: null,
           minLines: 10,
           style: TextStyle(color: currentTheme.textColor),
-          decoration: _inputDeco(theme, currentTheme, '在此书写完整的故事大纲、结局规划、体系设定...', isFlat),
+          decoration: _inputDeco(theme, currentTheme, '在此书写完整的故事大纲、结局规划、体系设定...', isPaper),
           onChanged: (_) => _isDirty = true,
         ),
         const SizedBox(height: 60),
@@ -447,7 +447,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildCustomTabView(WritingProvider provider, List<OutlineTab> tabs, ThemeData theme, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildCustomTabView(WritingProvider provider, List<OutlineTab> tabs, ThemeData theme, WritingTheme currentTheme, bool isPaper) {
     if ((_selectedMacroIndex - 1) >= tabs.length) return const SizedBox();
 
     final tabIndex = _selectedMacroIndex - 1;
@@ -467,7 +467,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
                 style: TextStyle(fontSize: 16, height: 1.6, color: currentTheme.textColor),
-                decoration: _inputDeco(theme, currentTheme, '在此记录${tab.title}的详细设定...', isFlat),
+                decoration: _inputDeco(theme, currentTheme, '在此记录${tab.title}的详细设定...', isPaper),
                 onChanged: (_) => _isDirty = true,
               ),
             ),
@@ -480,39 +480,39 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
       context,
       theme,
       currentTheme,
-      isFlat,
+      isPaper,
       nodes: tab.nodes ?? [],
       onReorder: (oldIdx, newIdx) => provider.reorderNodesInTab(tabIndex, oldIdx, newIdx),
-      onAdd: () => _showNodeDialog(context, (t, c) => provider.addNodeToTab(tabIndex, t, c), isFlat),
-      onEdit: (node, nodeIdx) => _showNodeDialog(context, (t, c) => provider.updateNodeInTab(tabIndex, nodeIdx, t, c), isFlat, node: node),
+      onAdd: () => _showNodeDialog(context, (t, c) => provider.addNodeToTab(tabIndex, t, c), isPaper),
+      onEdit: (node, nodeIdx) => _showNodeDialog(context, (t, c) => provider.updateNodeInTab(tabIndex, nodeIdx, t, c), isPaper, node: node),
       onDelete: (nodeIdx) => provider.deleteNodeInTab(tabIndex, nodeIdx),
     );
   }
 
-  Widget _buildPlotPage(BuildContext context, WritingProvider provider, ThemeData theme, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildPlotPage(BuildContext context, WritingProvider provider, ThemeData theme, WritingTheme currentTheme, bool isPaper) {
     final nodes = provider.book.customOutlines ?? [];
 
     return _buildNodeList(
       context,
       theme,
       currentTheme,
-      isFlat,
+      isPaper,
       nodes: nodes,
       isLegacy: true,
       onReorder: provider.reorderPlotNodes,
-      onAdd: () => _showNodeDialog(context, provider.addPlotNode, isFlat),
-      onEdit: (node, index) => _showNodeDialog(context, (t, c) => provider.updatePlotNode(index, t, c), isFlat, legacyNode: node as CustomOutline),
+      onAdd: () => _showNodeDialog(context, provider.addPlotNode, isPaper),
+      onEdit: (node, index) => _showNodeDialog(context, (t, c) => provider.updatePlotNode(index, t, c), isPaper, legacyNode: node as CustomOutline),
       onDelete: provider.deletePlotNode,
     );
   }
 
-  InputDecoration _inputDeco(ThemeData theme, WritingTheme currentTheme, String hint, bool isFlat) {
+  InputDecoration _inputDeco(ThemeData theme, WritingTheme currentTheme, String hint, bool isPaper) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: currentTheme.textColor.withValues(alpha: 0.3)),
       filled: true,
       fillColor: currentTheme.textColor.withValues(alpha: 0.05),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), borderSide: BorderSide.none),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.all(16),
     );
   }
@@ -521,7 +521,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
       BuildContext context,
       ThemeData theme,
       WritingTheme currentTheme,
-      bool isFlat,
+      bool isPaper,
       {
         required List<dynamic> nodes,
         required Function(int, int) onReorder,
@@ -547,7 +547,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: currentTheme.textColor.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(isFlat ? 8.0 : 100.0),
+                  borderRadius: BorderRadius.circular(isPaper ? 8.0 : 100.0),
                 ),
                 child: Icon(Icons.add, size: 32, color: theme.colorScheme.primary),
               ),
@@ -593,7 +593,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: currentTheme.textColor.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
+                            borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
                             // 【彻底删除边框】去除大纲节点上的 border
                           ),
                           child: Column(
@@ -630,7 +630,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
             child: FloatingActionButton.small(
                 heroTag: 'manual_add',
                 onPressed: onAdd,
-                shape: isFlat ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)) : null,
+                shape: isPaper ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)) : null,
                 child: const Icon(Icons.add)
             ),
           ),
@@ -639,14 +639,14 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     );
   }
 
-  void _showCreateTabDialog(BuildContext context, WritingProvider provider, bool isFlat) {
+  void _showCreateTabDialog(BuildContext context, WritingProvider provider, bool isPaper) {
     final ctrl = TextEditingController();
     OutlineType selectedType = OutlineType.text;
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
           title: const Text('新建设定集'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -654,7 +654,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
               TextField(
                   controller: ctrl,
                   autofocus: true,
-                  decoration: InputDecoration(labelText: '名称', hintText: '例如: 魔法体系', border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)))
+                  decoration: InputDecoration(labelText: '名称', hintText: '例如: 魔法体系', border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)))
               ),
               const SizedBox(height: 16),
               Row(
@@ -669,7 +669,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
             FilledButton(
-              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))),
+              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
               onPressed: () {
                 if (ctrl.text.isNotEmpty) {
                   provider.createSettingsTab(ctrl.text, selectedType);
@@ -684,16 +684,16 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     );
   }
 
-  void _showTabMenu(BuildContext context, WritingProvider provider, int index, OutlineTab tab, bool isFlat) {
+  void _showTabMenu(BuildContext context, WritingProvider provider, int index, OutlineTab tab, bool isPaper) {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 24.0))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 24.0))),
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
             leading: const Icon(Icons.edit), title: const Text('重命名'),
-            onTap: () { Navigator.pop(ctx); _showRenameTabDialog(context, provider, index, tab.title ?? '', isFlat); },
+            onTap: () { Navigator.pop(ctx); _showRenameTabDialog(context, provider, index, tab.title ?? '', isPaper); },
           ),
           ListTile(
             leading: const Icon(Icons.delete, color: Colors.red), title: const Text('删除此设定集', style: TextStyle(color: Colors.red)),
@@ -708,18 +708,18 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     );
   }
 
-  void _showRenameTabDialog(BuildContext context, WritingProvider provider, int index, String oldName, bool isFlat) {
+  void _showRenameTabDialog(BuildContext context, WritingProvider provider, int index, String oldName, bool isPaper) {
     final ctrl = TextEditingController(text: oldName);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         title: const Text('重命名'),
-        content: TextField(controller: ctrl, autofocus: true, decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)))),
+        content: TextField(controller: ctrl, autofocus: true, decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))),
+              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
               onPressed: () { if (ctrl.text.isNotEmpty) { provider.renameSettingsTab(index, ctrl.text); Navigator.pop(context); }},
               child: const Text('确定')
           ),
@@ -728,7 +728,7 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     );
   }
 
-  void _showNodeDialog(BuildContext context, Function(String, String) onSave, bool isFlat, {dynamic node, CustomOutline? legacyNode}) {
+  void _showNodeDialog(BuildContext context, Function(String, String) onSave, bool isPaper, {dynamic node, CustomOutline? legacyNode}) {
     final title = node?.title ?? legacyNode?.title ?? '';
     final content = node?.content ?? legacyNode?.content ?? '';
     final tCtrl = TextEditingController(text: title);
@@ -738,23 +738,23 @@ class _OutlineViewState extends State<OutlineView> with SingleTickerProviderStat
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         title: Text(title.isEmpty ? '添加条目' : '编辑条目'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: tCtrl, autofocus: true, decoration: InputDecoration(labelText: '标题', border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)))),
+              TextField(controller: tCtrl, autofocus: true, decoration: InputDecoration(labelText: '标题', border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)))),
               const SizedBox(height: 12),
               MarkdownToolbar(controller: cCtrl),
-              TextField(controller: cCtrl, maxLines: 5, decoration: InputDecoration(labelText: '内容详情', border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)))),
+              TextField(controller: cCtrl, maxLines: 5, decoration: InputDecoration(labelText: '内容详情', border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)))),
             ],
           ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))),
+              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
               onPressed: () { if (tCtrl.text.isNotEmpty) { onSave(tCtrl.text, cCtrl.text); Navigator.pop(context); }},
               child: const Text('保存')
           ),

@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart'; // 【新增】
 import 'package:monet_writer/providers/theme_provider.dart'; // 【新增】
+import 'package:monet_writer/utils/monet_animations.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/models/ai/ai_config.dart';
 
@@ -67,7 +68,7 @@ class _AiInputToolbarState extends State<AiInputToolbar> {
   @override
   Widget build(BuildContext context) {
     final currentTheme = context.watch<UserProvider>().currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper;
     const accentColor = Colors.purpleAccent; // 保持魔法紫作为点缀
 
     return Container(
@@ -75,24 +76,24 @@ class _AiInputToolbarState extends State<AiInputToolbar> {
       decoration: BoxDecoration(
         color: currentTheme.backgroundColor, // 完美融入底色
         border: Border(
-          top: BorderSide(color: isFlat ? currentTheme.textColor.withValues(alpha: 0.1) : accentColor.withValues(alpha: 0.5), width: 1),
+          top: BorderSide(color: isPaper ? currentTheme.textColor.withValues(alpha: 0.1) : accentColor.withValues(alpha: 0.5), width: 1),
         ),
         boxShadow: [
-          if (!isFlat) // 极简风不要阴影
+          if (!isPaper) // 纸感风不要阴影
             BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, -2)),
         ],
       ),
       child: SafeArea(
         top: false,
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: _buildContent(currentTheme, isFlat, accentColor),
+          duration: MonetDurations.quick,
+          child: _buildContent(currentTheme, isPaper, accentColor),
         ),
       ),
     );
   }
 
-  Widget _buildContent(WritingTheme currentTheme, bool isFlat, Color accentColor) {
+  Widget _buildContent(WritingTheme currentTheme, bool isPaper, Color accentColor) {
     switch (_status) {
       case _AiStatus.loading:
         return _buildStatusRow(
@@ -108,11 +109,11 @@ class _AiInputToolbarState extends State<AiInputToolbar> {
         );
       case _AiStatus.input:
       default:
-        return _buildInputRow(currentTheme, isFlat, accentColor);
+        return _buildInputRow(currentTheme, isPaper, accentColor);
     }
   }
 
-  Widget _buildInputRow(WritingTheme currentTheme, bool isFlat, Color accentColor) {
+  Widget _buildInputRow(WritingTheme currentTheme, bool isPaper, Color accentColor) {
     return Row(
       key: const ValueKey('input'),
       children: [
@@ -124,7 +125,7 @@ class _AiInputToolbarState extends State<AiInputToolbar> {
           child: Container(
             decoration: BoxDecoration(
               color: currentTheme.textColor.withValues(alpha: 0.05), // 高级透明底色
-              borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0), // 动态圆角
+              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0), // 动态圆角
             ),
             child: TextField(
               controller: _controller,
@@ -176,3 +177,4 @@ class _AiInputToolbarState extends State<AiInputToolbar> {
     );
   }
 }
+

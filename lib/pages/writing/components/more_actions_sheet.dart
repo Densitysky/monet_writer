@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -13,11 +13,11 @@ class MoreActionsSheet extends StatelessWidget {
   final WritingProvider provider;
   const MoreActionsSheet({super.key, required this.provider});
 
-  Widget _buildActionItem(BuildContext context, IconData icon, String label, Color color, VoidCallback onTap, ThemeData theme, UserProvider userProvider, bool isFlat) {
+  Widget _buildActionItem(BuildContext context, IconData icon, String label, Color color, VoidCallback onTap, ThemeData theme, UserProvider userProvider, bool isPaper) {
     final currentTheme = userProvider.currentTheme;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
+      borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -26,7 +26,7 @@ class MoreActionsSheet extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(isFlat ? 8.0 : 25.0), // 动态形状
+              borderRadius: BorderRadius.circular(isPaper ? 8.0 : 25.0), // 动态形状
             ),
             child: Icon(icon, color: color, size: 24),
           ),
@@ -49,11 +49,12 @@ class MoreActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper;
     final theme = userProvider.currentTheme;
+    final accent = Theme.of(context).colorScheme.primary;
 
     return ClipRRect(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 24.0)), // 【动态圆角】
+      borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 24.0)), // 【动态圆角】
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
@@ -65,14 +66,14 @@ class MoreActionsSheet extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!isFlat) // 极简风下不要这个拖拽横条
+                if (!isPaper) // 纸感风下不要这个拖拽横条
                   Column(
                       children: [
                         const SizedBox(height: 12),
                         Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2))),
                       ]
                   ),
-                SizedBox(height: isFlat ? 24 : 16),
+                SizedBox(height: isPaper ? 24 : 16),
                 Text('更多功能', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textColor)),
                 const SizedBox(height: 16),
 
@@ -86,42 +87,42 @@ class MoreActionsSheet extends StatelessWidget {
                     childAspectRatio: 0.7,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
-                      _buildActionItem(context, CupertinoIcons.wand_stars, '智能排版\n并复制', Colors.purpleAccent, () async {
+                      _buildActionItem(context, CupertinoIcons.wand_stars, '智能排版\n并复制', accent, () async {
                         Navigator.pop(context);
                         final success = await provider.smartCopyCurrentChapter();
                         if (success && context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✨ 智能排版完成，已复制到剪贴板！')));
-                      }, Theme.of(context), userProvider, isFlat),
+                      }, Theme.of(context), userProvider, isPaper),
 
-                      _buildActionItem(context, CupertinoIcons.doc_on_clipboard, '原文复制', Colors.blueAccent, () async {
+                      _buildActionItem(context, CupertinoIcons.doc_on_clipboard, '原文复制', accent.withValues(alpha: 0.80), () async {
                         Navigator.pop(context);
                         final success = await provider.rawCopyCurrentChapter();
                         if (success && context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('📄 原文已无损复制到剪贴板！')));
-                      }, Theme.of(context), userProvider, isFlat),
+                      }, Theme.of(context), userProvider, isPaper),
 
-                      _buildActionItem(context, CupertinoIcons.doc_text, '导出本章\n(TXT)', Colors.orangeAccent, () async {
+                      _buildActionItem(context, CupertinoIcons.doc_text, '导出本章\n(TXT)', accent.withValues(alpha: 0.70), () async {
                         Navigator.pop(context);
                         await provider.exportCurrentChapterTxt();
-                      }, Theme.of(context), userProvider, isFlat),
+                      }, Theme.of(context), userProvider, isPaper),
 
-                      _buildActionItem(context, CupertinoIcons.book, '导出全书\n(TXT)', Colors.redAccent, () async {
+                      _buildActionItem(context, CupertinoIcons.book, '导出全书\n(TXT)', accent.withValues(alpha: 0.60), () async {
                         Navigator.pop(context);
                         await provider.exportWholeBookTxt();
-                      }, Theme.of(context), userProvider, isFlat),
+                      }, Theme.of(context), userProvider, isPaper),
 
-                      _buildActionItem(context, CupertinoIcons.search, '查找替换', Colors.green, () {
+                      _buildActionItem(context, CupertinoIcons.search, '查找替换', accent.withValues(alpha: 0.85), () {
                         Navigator.pop(context);
                         showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => SearchReplaceBottomSheet(provider: provider));
-                      }, Theme.of(context), userProvider, isFlat),
+                      }, Theme.of(context), userProvider, isPaper),
 
-                      _buildActionItem(context, CupertinoIcons.clock, '时光机', Colors.teal, () {
+                      _buildActionItem(context, CupertinoIcons.clock, '时光机', accent.withValues(alpha: 0.75), () {
                         Navigator.pop(context);
                         showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => HistoryBottomSheet(provider: provider));
-                      }, Theme.of(context), userProvider, isFlat),
+                      }, Theme.of(context), userProvider, isPaper),
 
-                      _buildActionItem(context, CupertinoIcons.photo, '生成长图', Colors.pinkAccent, () {
+                      _buildActionItem(context, CupertinoIcons.photo, '生成长图', accent.withValues(alpha: 0.65), () {
                         Navigator.pop(context);
                         Navigator.push(context, CupertinoPageRoute(builder: (context) => ImageExportPage(provider: provider)));
-                      }, Theme.of(context), userProvider, isFlat),
+                      }, Theme.of(context), userProvider, isPaper),
                     ],
                   ),
                 ),
@@ -134,3 +135,4 @@ class MoreActionsSheet extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
@@ -68,8 +68,8 @@ class _RightDrawerState extends State<RightDrawer> {
     final currentTheme = userProvider.currentTheme;
 
     // 【核心】动态获取视觉风格
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
-    final double radius = isFlat ? 4.0 : 24.0; // 【动态圆角】
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper;
+    final double radius = isPaper ? 4.0 : 24.0; // 【动态圆角】
 
     final topPadding = MediaQuery.of(context).padding.top;
     final isDark = currentTheme.backgroundColor.computeLuminance() < 0.5;
@@ -89,7 +89,7 @@ class _RightDrawerState extends State<RightDrawer> {
                 color: currentTheme.backgroundColor.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(radius), // 【动态圆角】
                 boxShadow: [
-                  if (!isFlat) // 【极简风去阴影】
+                  if (!isPaper) // 【纸感风去阴影】
                     BoxShadow(
                       color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                       blurRadius: 20,
@@ -190,3 +190,4 @@ class _RightDrawerState extends State<RightDrawer> {
     }
   }
 }
+

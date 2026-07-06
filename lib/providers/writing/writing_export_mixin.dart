@@ -3,7 +3,7 @@ part of '../writing_provider.dart';
 /// 零件八：排版与导出核心逻辑
 mixin WritingExportMixin on WritingProviderBase {
 
-  /// ✨ 核心科技：智能排版并复制到剪贴板
+  /// ✨ 核心科技：智能排版（覆盖编辑器 + 复制到剪贴板）
   Future<bool> smartCopyCurrentChapter() async {
     if (currentChapter == null) return false;
     String text = contentController.text;
@@ -11,16 +11,34 @@ mixin WritingExportMixin on WritingProviderBase {
     // 1. 按换行符分割，正则 `\n+` 会自动过滤掉用户多敲的所有空行
     final paragraphs = text.split(RegExp(r'\n+'));
 
-    // 2. 遍历每一段，去除首尾乱按的空格，并强制加上网文标准的“全角双空格”缩进
+    // 2. 遍历每一段，去除首尾乱按的空格，并强制加上网文标准的"全角双空格"缩进
     final formatted = paragraphs.map((p) {
       final trimmed = p.trim();
       if (trimmed.isEmpty) return '';
-      return '　　$trimmed'; // 前面是两个全角空格
+      return '\u3000\u3000$trimmed'; // 前面是两个全角空格
     }).where((p) => p.isNotEmpty).join('\n'); // 段落间以单换行紧密拼接
 
-    // 3. 瞬间写入手机剪贴板
+    // 3. 覆盖编辑器内容并触发保存
+    contentController.text = formatted;
+    contentController.selection = TextSelection.collapsed(offset: formatted.length);
+    onContentChanged();
+
+    // 4. 同时复制到剪贴板
     await Clipboard.setData(ClipboardData(text: formatted));
     return true;
+  }
+
+  /// ─── 插入场景分隔符
+  void insertSceneSeparator() {
+    if (currentChapter == null) return;
+    final text = contentController.text;
+    final cursor = contentController.selection.baseOffset.clamp(0, text.length);
+    final before = text.substring(0, cursor);
+    final after = text.substring(cursor);
+    final separator = '\n\n─────\u3000─────\u3000─────\n\n';
+    contentController.text = '$before$separator$after';
+    contentController.selection = TextSelection.collapsed(offset: (before + separator).length);
+    onContentChanged();
   }
 
   /// 📄 原汁原味无损复制

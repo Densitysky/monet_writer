@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
@@ -14,8 +14,8 @@ class RootView extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentTheme = context.watch<UserProvider>().currentTheme;
 
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
-    final double cardRadius = isFlat ? 4.0 : 12.0;
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper;
+    final double cardRadius = isPaper ? 4.0 : 12.0;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -54,7 +54,7 @@ class RootView extends StatelessWidget {
             elevation: 0,
             color: currentTheme.textColor.withValues(alpha: 0.05),
             margin: const EdgeInsets.only(bottom: 12),
-            // 【已修改】无论是现代风还是极简风，统统不要线框，靠底色区分层级
+            // 【已修改】无论是现代风还是纸感风，统统不要线框，靠底色区分层级
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(cardRadius),
               side: BorderSide.none,
@@ -85,7 +85,7 @@ class RootView extends StatelessWidget {
           elevation: 0,
           color: currentTheme.textColor.withValues(alpha: 0.05),
           margin: const EdgeInsets.only(bottom: 12),
-          // 【已修改】无论是现代风还是极简风，统统不要线框
+          // 【已修改】无论是现代风还是纸感风，统统不要线框
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(cardRadius),
             side: BorderSide.none,
@@ -100,3 +100,4 @@ class RootView extends StatelessWidget {
     );
   }
 }
+

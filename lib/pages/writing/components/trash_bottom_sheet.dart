@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -35,12 +35,12 @@ class _TrashBottomSheetState extends State<TrashBottomSheet> {
     }
   }
 
-  void _showHardDeleteConfirm(TrashedChapter chapter, bool isFlat) {
+  void _showHardDeleteConfirm(TrashedChapter chapter, bool isPaper) {
     final theme = context.read<UserProvider>().currentTheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)), // 【动态圆角】
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)), // 【动态圆角】
         backgroundColor: theme.backgroundColor,
         title: Row(
           children: [
@@ -77,18 +77,18 @@ class _TrashBottomSheetState extends State<TrashBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<UserProvider>().currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat; // 【动态判断】
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper; // 【动态判断】
 
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
       decoration: BoxDecoration(
         color: theme.backgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 20.0)), // 【动态抹平顶部】
+        borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 20.0)), // 【动态抹平顶部】
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!isFlat) // 【极简风隐藏拖拽条】
+          if (!isPaper) // 【纸感风隐藏拖拽条】
             Column(
               children: [
                 const SizedBox(height: 12),
@@ -111,10 +111,10 @@ class _TrashBottomSheetState extends State<TrashBottomSheet> {
                 right: 16,
                 child: InkWell(
                   onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0), // 【动态圆角】
+                  borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0), // 【动态圆角】
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                    decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                     child: Icon(CupertinoIcons.xmark, size: 20, color: theme.textColor.withValues(alpha: 0.6)),
                   ),
                 ),
@@ -190,7 +190,7 @@ class _TrashBottomSheetState extends State<TrashBottomSheet> {
                           IconButton(
                             icon: Icon(CupertinoIcons.trash, color: Colors.redAccent.withValues(alpha: 0.8), size: 22),
                             tooltip: '彻底粉碎',
-                            onPressed: () => _showHardDeleteConfirm(chapter, isFlat),
+                            onPressed: () => _showHardDeleteConfirm(chapter, isPaper),
                           ),
                         ],
                       )
@@ -205,3 +205,4 @@ class _TrashBottomSheetState extends State<TrashBottomSheet> {
     );
   }
 }
+

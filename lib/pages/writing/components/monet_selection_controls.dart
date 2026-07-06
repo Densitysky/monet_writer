@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:monet_writer/providers/writing_provider.dart';
 import 'package:monet_writer/utils/provider_select_ext.dart';
 
@@ -74,13 +75,12 @@ class _MonetToolbar extends StatelessWidget {
     required this.handleSelectAll,
   });
 
-  void _onSelectParagraph() {
-    // 【修复 2：选段后气泡不消失】
-    // 删除了原本这里的 delegate.hideToolbar();
-    // 让系统在选中段落后，自动更新气泡的位置并保持浮现
-    provider.selectCurrentParagraph();
-    // 将视图滚动到新选区的末尾，确保用户能看到完整段落
-    delegate.bringIntoView(provider.contentController.selection.extent);
+  void _onUnderline() {
+    final sel = provider.contentController.selection;
+    if (!sel.isValid || sel.isCollapsed) return;
+    provider.contentController.quillController.formatText(
+      sel.start, sel.end - sel.start, Attribute.underline,
+    );
   }
 
   void _onAiClick() {
@@ -97,7 +97,7 @@ class _MonetToolbar extends StatelessWidget {
     );
 
     final currentTheme = context.selectCurrentTheme;
-    final isFlat = context.selectIsFlat;
+    final isPaper = context.selectIsPaper;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     // 气泡底色与文字颜色
@@ -117,11 +117,11 @@ class _MonetToolbar extends StatelessWidget {
           left: (anchor.dx - 120).clamp(10.0, MediaQuery.of(context).size.width - 250),
           top: anchor.dy,
           child: Material(
-            elevation: isFlat ? 0 : 8,
+            elevation: isPaper ? 0 : 8,
             color: tooltipBgColor,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
-              side: isFlat ? BorderSide(color: currentTheme.backgroundColor.withValues(alpha: 0.2), width: 1) : BorderSide.none,
+              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
+              side: isPaper ? BorderSide(color: currentTheme.backgroundColor.withValues(alpha: 0.2), width: 1) : BorderSide.none,
             ),
             child: Container(
               height: toolbarHeight,
@@ -133,9 +133,9 @@ class _MonetToolbar extends StatelessWidget {
                   _MenuButton(label: '复制', onTap: () => handleCopy(delegate), textColor: tooltipTextColor, iconColor: tooltipIconColor),
                   _MenuButton(label: '粘贴', onTap: () => handlePaste(delegate), textColor: tooltipTextColor, iconColor: tooltipIconColor),
                   _MenuButton(
-                      label: '选段',
-                      icon: Icons.segment,
-                      onTap: _onSelectParagraph,
+                      label: '划线',
+                      icon: Icons.format_underline,
+                      onTap: _onUnderline,
                       textColor: tooltipTextColor,
                       iconColor: tooltipIconColor
                   ),
@@ -199,3 +199,4 @@ class _MenuButton extends StatelessWidget {
     );
   }
 }
+

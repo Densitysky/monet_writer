@@ -27,6 +27,10 @@ mixin WritingEditorMixin on WritingProviderBase {
       final int index = selection.baseOffset - 1;
       if (index >= 0 && index < currentText.length) {
         final String char = currentText[index];
+        // 自动首行缩进：换行后对新段落应用 2em 缩进
+        if (char == '\n' && index + 1 < currentText.length) {
+          _applyFirstLineIndent(index + 1);
+        }
         const targetSymbols = "，。！？；： “”「」【】（）—…《》、";
         if (targetSymbols.contains(char)) {
           _updateRecentSymbols(char);
@@ -34,6 +38,15 @@ mixin WritingEditorMixin on WritingProviderBase {
       }
     }
     _lastText = currentText;
+  }
+
+  void _applyFirstLineIndent(int charIndex) {
+    if (charIndex <= 1) return;
+    _isAiUpdating = true;
+    try {
+      contentController.quillController.replaceText(charIndex, 0, '\u3000\u3000', null);
+    } catch (_) {}
+    _isAiUpdating = false;
   }
 
   /// 更新最近符号列表 (LRU 算法：最新使用的放最前面)

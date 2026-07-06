@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
@@ -142,6 +142,44 @@ class SettingsView extends StatelessWidget {
           label: settings.paragraphSpacing.toInt().toString(),
           onChanged: (v) => settings.updateWritingConfig(paragraphSpacing: v),
         ),
+
+        const SizedBox(height: 24),
+        Divider(color: currentTheme.textColor.withValues(alpha: 0.1)),
+
+        // 沉浸标题风格
+        Text('沉浸标题风格', style: titleStyle),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _StyleChip(
+              label: '纸感',
+              isSelected: settings.immersiveTitleStyle == 0,
+              onTap: () => settings.setImmersiveTitleStyle(0),
+            ),
+            _StyleChip(
+              label: '细线分隔',
+              isSelected: settings.immersiveTitleStyle == 1,
+              onTap: () => settings.setImmersiveTitleStyle(1),
+            ),
+            _StyleChip(
+              label: '华丽角标',
+              isSelected: settings.immersiveTitleStyle == 2,
+              onTap: () => settings.setImmersiveTitleStyle(2),
+            ),
+            _StyleChip(
+              label: '日式韵味',
+              isSelected: settings.immersiveTitleStyle == 3,
+              onTap: () => settings.setImmersiveTitleStyle(3),
+            ),
+            _StyleChip(
+              label: '毛玻璃卡片',
+              isSelected: settings.immersiveTitleStyle == 4,
+              onTap: () => settings.setImmersiveTitleStyle(4),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -175,7 +213,7 @@ class _FontChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ChoiceChip(
-      label: Text(label, style: const TextStyle(fontSize: 13)),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
       selected: isSelected,
       onSelected: (_) => onTap(),
       selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
@@ -187,6 +225,39 @@ class _FontChip extends StatelessWidget {
         color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.3),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _StyleChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _StyleChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ChoiceChip(
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      labelStyle: TextStyle(
+        color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+      ),
+      side: BorderSide(
+        color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.3),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      visualDensity: VisualDensity.compact,
     );
   }
 }

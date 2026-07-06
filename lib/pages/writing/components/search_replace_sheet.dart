@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart'; // 【新增】引入主题引擎
 import 'package:monet_writer/providers/writing_provider.dart';
+import 'package:monet_writer/utils/monet_animations.dart';
 
 class SearchReplaceBottomSheet extends StatefulWidget {
   final WritingProvider provider;
@@ -44,7 +45,7 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
     }
   }
 
-  void _showChapterReplaceConfirm(bool isFlat) {
+  void _showChapterReplaceConfirm(bool isPaper) {
     if (_report == null || _report!.currentChapterMatches == 0) return;
     final replaceText = _replaceController.text;
     final theme = context.read<UserProvider>().currentTheme;
@@ -52,7 +53,7 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)), // 【动态圆角】
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)), // 【动态圆角】
         backgroundColor: theme.backgroundColor,
         title: Text('本章替换确认', style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold)),
         content: Text(
@@ -80,7 +81,7 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
     );
   }
 
-  void _showGlobalReplaceConfirm(bool isFlat) {
+  void _showGlobalReplaceConfirm(bool isPaper) {
     if (_report == null || _report!.totalBookMatches == 0) return;
     final replaceText = _replaceController.text;
     final theme = context.read<UserProvider>().currentTheme;
@@ -88,7 +89,7 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)), // 【动态圆角】
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)), // 【动态圆角】
         backgroundColor: theme.backgroundColor,
         title: Row(
           children: [
@@ -139,7 +140,7 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
     final theme = userProvider.currentTheme;
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat; // 【动态判断】
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper; // 【动态判断】
     final isDark = theme.backgroundColor.computeLuminance() < 0.5;
 
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
@@ -149,12 +150,12 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
       padding: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
         color: theme.backgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 20.0)), // 【动态抹平顶部】
+        borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 20.0)), // 【动态抹平顶部】
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!isFlat) // 【极简风隐藏拖拽条】
+          if (!isPaper) // 【纸感风隐藏拖拽条】
             Column(
                 children: [
                   const SizedBox(height: 12),
@@ -177,10 +178,10 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
                 right: 16,
                 child: InkWell(
                   onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0), // 【动态圆角】
+                  borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0), // 【动态圆角】
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                    decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                     child: Icon(CupertinoIcons.xmark, size: 20, color: theme.textColor.withValues(alpha: 0.6)),
                   ),
                 ),
@@ -206,7 +207,7 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
                     ),
                     filled: true,
                     fillColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), borderSide: BorderSide.none), // 【动态圆角】
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), borderSide: BorderSide.none), // 【动态圆角】
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onSubmitted: (_) => _performSearch(),
@@ -222,14 +223,15 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
                     prefixIcon: Icon(CupertinoIcons.arrow_swap, color: theme.textColor.withValues(alpha: 0.5)),
                     filled: true,
                     fillColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), borderSide: BorderSide.none), // 【动态圆角】
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), borderSide: BorderSide.none), // 【动态圆角】
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 if (_report != null && !_isSearching) ...[
-                  Row(
+                  FadeSlideEntrance(
+                    child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
@@ -246,10 +248,10 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
                                 backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
                                 foregroundColor: Colors.blueAccent,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)), // 【动态圆角】
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)), // 【动态圆角】
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                               ),
-                              onPressed: () => _showChapterReplaceConfirm(isFlat),
+                              onPressed: () => _showChapterReplaceConfirm(isPaper),
                               child: const Text('本章替换'),
                             ),
                           const SizedBox(width: 8),
@@ -259,15 +261,16 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
                                 backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                                 foregroundColor: Colors.redAccent,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)), // 【动态圆角】
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)), // 【动态圆角】
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                               ),
-                              onPressed: () => _showGlobalReplaceConfirm(isFlat),
+                              onPressed: () => _showGlobalReplaceConfirm(isPaper),
                               child: const Text('全局替换', style: TextStyle(fontWeight: FontWeight.bold)),
                             ),
                         ],
                       )
                     ],
+                  ),
                   ),
                 ],
               ],
@@ -351,3 +354,4 @@ class _SearchReplaceBottomSheetState extends State<SearchReplaceBottomSheet> {
     );
   }
 }
+

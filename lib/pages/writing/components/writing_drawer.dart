@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -23,8 +23,8 @@ class WritingDrawer extends StatelessWidget {
     final currentTheme = userProvider.currentTheme;
 
     // 【核心】动态获取视觉风格
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
-    final double radius = isFlat ? 4.0 : 24.0; // 极简风小圆角，现代风大圆角
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper;
+    final double radius = isPaper ? 4.0 : 24.0; // 纸感风小圆角，现代风大圆角
 
     final topPadding = MediaQuery.of(context).padding.top;
     final isDark = currentTheme.backgroundColor.computeLuminance() < 0.5;
@@ -38,7 +38,7 @@ class WritingDrawer extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(radius), // 【动态圆角】
           boxShadow: [
-            if (!isFlat) // 【极简风去阴影】
+            if (!isPaper) // 【纸感风去阴影】
               BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.15),
                   blurRadius: 20,
@@ -102,26 +102,30 @@ class WritingDrawer extends StatelessWidget {
                             final chapter = chapters[index];
                             final isSelected = provider.currentChapter?.id == chapter.id;
 
-                            return ListTile(
-                              selected: isSelected,
-                              selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-                              // 【动态圆角】选中态的背景也做适配
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)),
-                              title: Text(
-                                  chapter.title,
-                                  style: TextStyle(
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected ? theme.colorScheme.primary : currentTheme.textColor
-                                  )
-                              ),
-                              subtitle: Text(
-                                  '${chapter.wordCount} 字',
-                                  style: TextStyle(fontSize: 10, color: currentTheme.textColor.withValues(alpha: 0.5))
-                              ),
-                              onTap: () { provider.selectChapter(chapter); Navigator.pop(context); },
-                              trailing: IconButton(
-                                icon: Icon(CupertinoIcons.trash, size: 18, color: currentTheme.textColor.withValues(alpha: 0.3)),
-                                onPressed: () => _showDeleteConfirmDialog(context, provider, chapter, isFlat),
+                            return FadeSlideEntrance(
+                              key: ValueKey(chapter.id),
+                              delayMs: 60 + index * 40,
+                              child: ListTile(
+                                selected: isSelected,
+                                selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                                // 【动态圆角】选中态的背景也做适配
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)),
+                                title: Text(
+                                    chapter.title,
+                                    style: TextStyle(
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected ? theme.colorScheme.primary : currentTheme.textColor
+                                    )
+                                ),
+                                subtitle: Text(
+                                    '${chapter.wordCount} 字',
+                                    style: TextStyle(fontSize: 10, color: currentTheme.textColor.withValues(alpha: 0.5))
+                                ),
+                                onTap: () { provider.selectChapter(chapter); Navigator.pop(context); },
+                                trailing: IconButton(
+                                  icon: Icon(CupertinoIcons.trash, size: 18, color: currentTheme.textColor.withValues(alpha: 0.3)),
+                                  onPressed: () => _showDeleteConfirmDialog(context, provider, chapter, isPaper),
+                                ),
                               ),
                             );
                           },
@@ -133,16 +137,16 @@ class WritingDrawer extends StatelessWidget {
                           children: [
                             Expanded(
                               child: FilledButton.icon(
-                                onPressed: () => _showCreateDialog(context, provider, isFlat),
+                                onPressed: () => _showCreateDialog(context, provider, isPaper),
                                 icon: const Icon(CupertinoIcons.add, size: 18),
                                 label: const Text('新建章节'),
-                                style: FilledButton.styleFrom(minimumSize: const Size(0, 48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0))), // 【动态圆角】
+                                style: FilledButton.styleFrom(minimumSize: const Size(0, 48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0))), // 【动态圆角】
                               ),
                             ),
                             const SizedBox(width: 12),
                             Container(
                               height: 48, width: 48,
-                              decoration: BoxDecoration(color: theme.colorScheme.errorContainer.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0)), // 【动态圆角】
+                              decoration: BoxDecoration(color: theme.colorScheme.errorContainer.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0)), // 【动态圆角】
                               child: IconButton(
                                 icon: Icon(CupertinoIcons.trash, color: theme.colorScheme.error, size: 20),
                                 tooltip: '废纸篓',
@@ -166,7 +170,7 @@ class WritingDrawer extends StatelessWidget {
     );
   }
 
-  void _showCreateDialog(BuildContext context, WritingProvider provider, bool isFlat) async {
+  void _showCreateDialog(BuildContext context, WritingProvider provider, bool isPaper) async {
     final count = await DatabaseService().isar.chapters.filter().bookIdEqualTo(provider.book.id).count();
     final defaultTitle = '第${count + 1}章';
     final controller = TextEditingController(text: defaultTitle);
@@ -176,20 +180,20 @@ class WritingDrawer extends StatelessWidget {
     await showMonetDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)), // 【动态圆角】
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)), // 【动态圆角】
         title: const Text('新建章节'),
         content: TextField(
           controller: controller,
           decoration: InputDecoration(
             hintText: '章节标题',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)), // 【动态圆角】
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)), // 【动态圆角】
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))), // 【动态圆角】
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))), // 【动态圆角】
             onPressed: () async {
               if (controller.text.isNotEmpty) {
                 Navigator.pop(context);
@@ -203,11 +207,11 @@ class WritingDrawer extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmDialog(BuildContext context, WritingProvider provider, Chapter chapter, bool isFlat) {
+  void _showDeleteConfirmDialog(BuildContext context, WritingProvider provider, Chapter chapter, bool isPaper) {
     showMonetDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)), // 【动态圆角】
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)), // 【动态圆角】
         title: const Row(
           children: [
             Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.orangeAccent, size: 24),
@@ -219,7 +223,7 @@ class WritingDrawer extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消', style: TextStyle(color: Colors.grey))),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))), // 【动态圆角】
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))), // 【动态圆角】
             onPressed: () {
               Navigator.pop(ctx);
               provider.moveChapterToTrash(chapter);
@@ -231,3 +235,4 @@ class WritingDrawer extends StatelessWidget {
     );
   }
 }
+

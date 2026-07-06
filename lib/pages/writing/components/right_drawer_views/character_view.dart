@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -32,7 +32,7 @@ class _CharacterViewState extends State<CharacterView> {
     final theme = Theme.of(context);
     final currentTheme = context.watch<UserProvider>().currentTheme;
 
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final isPaper = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.paper;
 
     return Column(
       children: [
@@ -50,7 +50,7 @@ class _CharacterViewState extends State<CharacterView> {
                   final group = provider.book.characterGroups![gIndex];
                   return FadeSlideEntrance(
                     delayMs: (gIndex > 10 ? 10 : gIndex) * 50,
-                    child: _buildGroupItem(context, provider, group, gIndex, currentTheme, isFlat),
+                    child: _buildGroupItem(context, provider, group, gIndex, currentTheme, isPaper),
                   );
                 }),
 
@@ -68,7 +68,7 @@ class _CharacterViewState extends State<CharacterView> {
                       character,
                       cIndex,
                       null,
-                      isFlat,
+                      isPaper,
                     ),
                   );
                 }),
@@ -97,28 +97,28 @@ class _CharacterViewState extends State<CharacterView> {
                   style: FilledButton.styleFrom(
                     backgroundColor: theme.colorScheme.secondaryContainer,
                     foregroundColor: theme.colorScheme.onSecondaryContainer,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
 
               IconButton.outlined(
-                onPressed: () => _showCreateGroupDialog(context, provider, isFlat),
+                onPressed: () => _showCreateGroupDialog(context, provider, isPaper),
                 icon: Icon(Icons.create_new_folder_outlined, size: 20, color: currentTheme.textColor.withValues(alpha: 0.8)),
                 tooltip: '新建组',
                 style: IconButton.styleFrom(
                   side: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.2)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                 ),
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                onPressed: () => _showCharacterDialog(context, provider, isEdit: false, isFlat: isFlat),
+                onPressed: () => _showCharacterDialog(context, provider, isEdit: false, isPaper: isPaper),
                 icon: const Icon(Icons.person_add_alt_1, size: 20),
                 tooltip: '新建角色',
                 style: IconButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                 ),
               ),
             ],
@@ -151,7 +151,7 @@ class _CharacterViewState extends State<CharacterView> {
     }
   }
 
-  Widget _buildGroupItem(BuildContext context, WritingProvider provider, CharacterGroup group, int groupIndex, WritingTheme currentTheme, bool isFlat) {
+  Widget _buildGroupItem(BuildContext context, WritingProvider provider, CharacterGroup group, int groupIndex, WritingTheme currentTheme, bool isPaper) {
     final theme = Theme.of(context);
     return DragTarget<Map<String, int?>>(
       onWillAcceptWithDetails: (details) => details.data['groupIndex'] != groupIndex,
@@ -166,7 +166,7 @@ class _CharacterViewState extends State<CharacterView> {
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
             color: isHovering ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3) : Colors.transparent,
-            borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
+            borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
             border: isHovering ? Border.all(color: theme.colorScheme.primary) : null,
           ),
           child: ExpansionTile(
@@ -178,12 +178,12 @@ class _CharacterViewState extends State<CharacterView> {
             collapsedShape: const Border(),
             trailing: _buildMoreMenu(
               context,
-              onEdit: () => _showRenameGroupDialog(context, provider, groupIndex, group.title ?? '', isFlat),
-              onDelete: () => _confirmDeleteGroup(context, provider, groupIndex, group.safeCharacters.isNotEmpty, isFlat),
+              onEdit: () => _showRenameGroupDialog(context, provider, groupIndex, group.title ?? '', isPaper),
+              onDelete: () => _confirmDeleteGroup(context, provider, groupIndex, group.safeCharacters.isNotEmpty, isPaper),
             ),
             children: List.generate(group.safeCharacters.length, (index) {
               final character = group.safeCharacters[index];
-              return _buildDraggableCharacterItem(context, provider, character, index, groupIndex, isFlat);
+              return _buildDraggableCharacterItem(context, provider, character, index, groupIndex, isPaper);
             }),
           ),
         );
@@ -191,7 +191,7 @@ class _CharacterViewState extends State<CharacterView> {
     );
   }
 
-  Widget _buildDraggableCharacterItem(BuildContext context, WritingProvider provider, Character character, int index, int? groupIndex, bool isFlat) {
+  Widget _buildDraggableCharacterItem(BuildContext context, WritingProvider provider, Character character, int index, int? groupIndex, bool isPaper) {
     final dragData = {'index': index, 'groupIndex': groupIndex};
 
     final childWidget = CharacterCard(
@@ -208,7 +208,7 @@ class _CharacterViewState extends State<CharacterView> {
           ),
         );
       },
-      onEdit: () => _showCharacterDialog(context, provider, isEdit: true, character: character, index: index, groupIndex: groupIndex, isFlat: isFlat),
+      onEdit: () => _showCharacterDialog(context, provider, isEdit: true, character: character, index: index, groupIndex: groupIndex, isPaper: isPaper),
       onDelete: () => provider.deleteCharacter(index, groupIndex: groupIndex),
     );
 
@@ -222,7 +222,7 @@ class _CharacterViewState extends State<CharacterView> {
             width: 280,
             decoration: BoxDecoration(
               boxShadow: [
-                if (!isFlat)
+                if (!isPaper)
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 20,
@@ -230,7 +230,7 @@ class _CharacterViewState extends State<CharacterView> {
                     offset: const Offset(0, 15),
                   )
               ],
-              borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
+              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
               // 【核心修复：彻底删除了这里的 border，拥抱绝对的留白纯净】
             ),
             child: childWidget,
@@ -256,13 +256,13 @@ class _CharacterViewState extends State<CharacterView> {
     );
   }
 
-  void _showCharacterDialog(BuildContext context, WritingProvider provider, {required bool isEdit, Character? character, int? index, int? groupIndex, required bool isFlat}) {
+  void _showCharacterDialog(BuildContext context, WritingProvider provider, {required bool isEdit, Character? character, int? index, int? groupIndex, required bool isPaper}) {
     showMonetDialog(
       context: context,
       builder: (_) => _CharacterEditDialog(
         isEdit: isEdit,
         originalCharacter: character,
-        isFlat: isFlat,
+        isPaper: isPaper,
         onSave: (name, desc, path) async {
           if (isEdit) {
             provider.updateCharacter(index!, groupIndex: groupIndex, newName: name, newDesc: desc, newAvatarPath: path);
@@ -280,25 +280,25 @@ class _CharacterViewState extends State<CharacterView> {
     );
   }
 
-  void _showCreateGroupDialog(BuildContext context, WritingProvider provider, bool isFlat) {
+  void _showCreateGroupDialog(BuildContext context, WritingProvider provider, bool isPaper) {
     final controller = TextEditingController();
     showMonetDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         title: const Text('新建分组'),
         content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
               hintText: '例如：主角团',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)),
             )
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))),
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
             onPressed: () {
               if (controller.text.isNotEmpty) {
                 provider.createCharacterGroup(controller.text);
@@ -312,22 +312,22 @@ class _CharacterViewState extends State<CharacterView> {
     );
   }
 
-  void _showRenameGroupDialog(BuildContext context, WritingProvider provider, int index, String oldName, bool isFlat) {
+  void _showRenameGroupDialog(BuildContext context, WritingProvider provider, int index, String oldName, bool isPaper) {
     final controller = TextEditingController(text: oldName);
     showMonetDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         title: const Text('重命名分组'),
         content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)))
+            decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)))
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))),
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
             onPressed: () {
               if (controller.text.isNotEmpty) {
                 provider.renameCharacterGroup(index, controller.text);
@@ -341,7 +341,7 @@ class _CharacterViewState extends State<CharacterView> {
     );
   }
 
-  void _confirmDeleteGroup(BuildContext context, WritingProvider provider, int index, bool hasContent, bool isFlat) {
+  void _confirmDeleteGroup(BuildContext context, WritingProvider provider, int index, bool hasContent, bool isPaper) {
     if (!hasContent) {
       provider.deleteCharacterGroup(index);
       return;
@@ -349,13 +349,13 @@ class _CharacterViewState extends State<CharacterView> {
     showMonetDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         title: const Text('删除分组？'),
         content: const Text('删除分组将一并删除组内角色，是否继续？', style: TextStyle(color: Colors.red)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
             onPressed: () {
               provider.deleteCharacterGroup(index);
               Navigator.pop(context);
@@ -372,9 +372,9 @@ class _CharacterEditDialog extends StatefulWidget {
   final bool isEdit;
   final Character? originalCharacter;
   final Function(String name, String desc, String? path) onSave;
-  final bool isFlat;
+  final bool isPaper;
 
-  const _CharacterEditDialog({required this.isEdit, this.originalCharacter, required this.onSave, required this.isFlat});
+  const _CharacterEditDialog({required this.isEdit, this.originalCharacter, required this.onSave, required this.isPaper});
 
   @override
   State<_CharacterEditDialog> createState() => _CharacterEditDialogState();
@@ -414,7 +414,7 @@ class _CharacterEditDialogState extends State<_CharacterEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 20.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 20.0)),
       title: Text(widget.isEdit ? '编辑角色' : '新建角色'),
       content: SingleChildScrollView(
         child: Column(
@@ -444,7 +444,7 @@ class _CharacterEditDialogState extends State<_CharacterEditDialog> {
               controller: _nameCtrl,
               decoration: InputDecoration(
                   labelText: '角色名称',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 12.0))
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 12.0))
               ),
             ),
             const SizedBox(height: 16),
@@ -456,7 +456,7 @@ class _CharacterEditDialogState extends State<_CharacterEditDialog> {
               minLines: 2,
               decoration: InputDecoration(
                   labelText: '详细简介/核心萌点',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 12.0)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 12.0)),
                   alignLabelWithHint: true
               ),
             ),
@@ -466,7 +466,7 @@ class _CharacterEditDialogState extends State<_CharacterEditDialog> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
         FilledButton(
-          style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 20.0))),
+          style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 20.0))),
           onPressed: () {
             if (_nameCtrl.text.isNotEmpty) {
               widget.onSave(_nameCtrl.text, _descCtrl.text, _avatarPath);
