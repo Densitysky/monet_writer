@@ -7,9 +7,9 @@ import 'package:monet_writer/providers/user_provider.dart';
 /// 使用 context.select 替代 context.watch，仅在特定属性变化时重建
 
 extension BuildContextSelectX on BuildContext {
-  /// 仅 isFlat 变化时重建
-  bool get selectIsFlat =>
-      select<ThemeProvider, bool>((p) => p.themeStyle == AppThemeStyle.flat);
+  /// 仅纸感/羊皮纸风格变化时重建
+  bool get selectIsPaper =>
+      select<ThemeProvider, bool>((p) => p.themeStyle == AppThemeStyle.paper || p.themeStyle == AppThemeStyle.parchment);
 
   /// 仅当前主题变化时重建
   WritingTheme get selectCurrentTheme =>

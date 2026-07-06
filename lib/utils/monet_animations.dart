@@ -322,3 +322,113 @@ Future<T?> showSpringDialog<T>({
 }) {
   return showMonetDialog(context: context, builder: builder);
 }
+
+// ============================================================
+// 沉浸模式章节标题构建器（桌面端 + 移动端共用）
+// ============================================================
+class MonetImmersiveTitle {
+  const MonetImmersiveTitle._();
+
+  /// 沉浸模式下渲染章节标题，支持 5 种可选风格
+  /// [title] 章节标题文字
+  /// [txtColor] 文字颜色
+  /// [style] 0=极简 1=细线分隔 2=华丽角标 3=日式韵味 4=毛玻璃卡片
+  static Widget build(String title, Color txtColor, int style) {
+    Color a(double v) => txtColor.withValues(alpha: v);
+    switch (style) {
+      case 0: // 极简
+        return Padding(
+          padding: const EdgeInsets.only(top: 28, bottom: 4),
+          child: Column(children: [
+            Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, color: a(0.55), letterSpacing: 4)),
+            const SizedBox(height: 4),
+            Text('双击退出沉浸模式', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: a(0.35), letterSpacing: 2)),
+          ]),
+        );
+      case 2: // 华丽角标
+        return Padding(
+          padding: const EdgeInsets.only(top: 16, left: 32, right: 32),
+          child: Column(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: a(0.38), width: 1),
+                  bottom: BorderSide(color: a(0.38), width: 1),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(top: 0, left: 0, child: Container(width: 18, height: 18, decoration: BoxDecoration(border: Border(top: BorderSide(color: a(0.22)), left: BorderSide(color: a(0.22))))),),
+                  Positioned(top: 0, right: 0, child: Container(width: 18, height: 18, decoration: BoxDecoration(border: Border(top: BorderSide(color: a(0.22)), right: BorderSide(color: a(0.22))))),),
+                  Positioned(bottom: 0, left: 0, child: Container(width: 18, height: 18, decoration: BoxDecoration(border: Border(bottom: BorderSide(color: a(0.22)), left: BorderSide(color: a(0.22))))),),
+                  Positioned(bottom: 0, right: 0, child: Container(width: 18, height: 18, decoration: BoxDecoration(border: Border(bottom: BorderSide(color: a(0.22)), right: BorderSide(color: a(0.22))))),),
+                  Column(children: [
+                    Text('CHAPTER', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: a(0.32), letterSpacing: 4)),
+                    const SizedBox(height: 4),
+                    Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: a(0.55), letterSpacing: 6)),
+                  ]),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('轻触退出 · 双击呼出菜单', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: a(0.30), letterSpacing: 2)),
+          ]),
+        );
+      case 3: // 日式韵味
+        return SizedBox(
+          height: 80,
+          child: Stack(
+            children: [
+              Positioned(left: 24, top: 12, bottom: 12, child: Container(width: 1, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, a(0.30), Colors.transparent]))),),
+              Positioned(right: 24, top: 12, bottom: 12, child: Container(width: 1, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, a(0.30), Colors.transparent]))),),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400, color: a(0.52), letterSpacing: 5)),
+                    const SizedBox(height: 4),
+                    Text('轻触退出 · 双击呼出菜单', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: a(0.55), letterSpacing: 2)),
+                  ]),
+                ),
+              ),
+            ],
+          ),
+        );
+      case 4: // 毛玻璃卡片
+        return Padding(
+          padding: const EdgeInsets.only(top: 14, left: 48, right: 48),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: a(0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: a(0.22), width: 0.5),
+            ),
+            child: Column(children: [
+              Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: a(0.50), letterSpacing: 3)),
+              const SizedBox(height: 2),
+              Text('轻触退出 · 双击呼出菜单', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: a(0.55), letterSpacing: 1)),
+            ]),
+          ),
+        );
+      default: // 1: 细线分隔
+        return Padding(
+          padding: const EdgeInsets.only(top: 20, left: 40, right: 40),
+          child: Column(children: [
+            Row(children: [
+              Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.transparent, a(0.38), Colors.transparent]))),),
+              const SizedBox(width: 16),
+              Transform.rotate(angle: 0.785, child: Container(width: 6, height: 6, decoration: BoxDecoration(border: Border.all(color: a(0.22)), color: Colors.transparent)),),
+              const SizedBox(width: 16),
+              Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.transparent, a(0.38), Colors.transparent]))),),
+            ]),
+            const SizedBox(height: 10),
+            Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: a(0.55), letterSpacing: 4)),
+            const SizedBox(height: 4),
+            Text('轻触退出 · 双击呼出菜单', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: a(0.30), letterSpacing: 2)),
+          ]),
+        );
+    }
+  }
+}

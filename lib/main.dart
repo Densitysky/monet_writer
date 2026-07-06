@@ -118,7 +118,7 @@ class MainScaffold extends StatefulWidget {
   State<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<MainScaffold> {
+class _MainScaffoldState extends State<MainScaffold> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
   // 页面列表
@@ -129,20 +129,66 @@ class _MainScaffoldState extends State<MainScaffold> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // 显示当前选中的页面
-      body: _pages[_currentIndex],
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
-      // 底部导航栏
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
-          ),
-          NavigationBar(
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // App 进入后台时，让所有 Provider 有机会持久化
+      context.read<ThemeProvider>().notifyListeners();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeProvider = context.watch<ThemeProvider>();
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+
+    // 柔和模式：三个独立悬浮图标按钮
+    Widget bottomBar;
+    if (isNeumorphic) {
+      bottomBar = Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        child: Row(
+          children: [
+            _buildneumorphicNavItem(
+              icon: Icons.book_outlined,
+              selectedIcon: Icons.book,
+              label: '写作',
+              selected: _currentIndex == 0,
+              onTap: () => setState(() => _currentIndex = 0),
+            ),
+            const SizedBox(width: 12),
+            _buildneumorphicNavItem(
+              icon: Icons.lightbulb_outline,
+              selectedIcon: Icons.lightbulb,
+              label: '灵感',
+              selected: _currentIndex == 1,
+              onTap: () => setState(() => _currentIndex = 1),
+            ),
+            const SizedBox(width: 12),
+            _buildneumorphicNavItem(
+              icon: Icons.person_outline,
+              selectedIcon: Icons.person,
+              label: '我的',
+              selected: _currentIndex == 2,
+              onTap: () => setState(() => _currentIndex = 2),
+            ),
+          ],
+        ),
+      );
+    } else {
+      final navBar = NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
           setState(() {
@@ -166,8 +212,75 @@ class _MainScaffoldState extends State<MainScaffold> {
             label: '我的',
           ),
         ],
+      );
+
+      bottomBar = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Divider(height: 1, color: theme.colorScheme.outlineVariant),
           ),
+          navBar,
         ],
+      );
+    }
+
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: bottomBar,
+    );
+  }
+
+  Widget _buildneumorphicNavItem({
+    required IconData icon,
+    required IconData selectedIcon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFF5F7FA) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: selected
+                ? const [
+                    // 选中项：明显浮雕凸起
+                    BoxShadow(color: Color(0xFFFFFFFF), offset: Offset(-4, -4), blurRadius: 10),
+                    BoxShadow(color: Color(0xFFC5CEDC), offset: Offset(4, 4), blurRadius: 16),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected ? selectedIcon : icon,
+                size: 22,
+                color: selected
+                    ? primary
+                    : onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected
+                      ? primary
+                      : onSurface.withValues(alpha: 0.45),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
