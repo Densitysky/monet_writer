@@ -162,7 +162,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
     final userProvider = context.watch<UserProvider>();
     final provider = context.watch<WritingProvider>();
 
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
     final baseColor = _extractedColor ?? Theme.of(context).colorScheme.primary;
     final isAnalyzing = provider.isAnalyzing(_nameCtrl.text);

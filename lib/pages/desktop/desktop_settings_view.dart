@@ -23,7 +23,7 @@ class DesktopSettingsView extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
 
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -88,11 +88,12 @@ class DesktopSettingsView extends StatelessWidget {
                     ),
                     Divider(height: 1, color: currentTheme.textColor.withValues(alpha: 0.05)),
                     _buildSettingRow(
-                      title: 'UI 视觉风格', subtitle: '现代 · 纸感 · 黄金 · 柔和', currentTheme: currentTheme,
+                      title: 'UI 视觉风格', subtitle: '现代 · 纸感 · 羊皮纸 · 黄金 · 柔和', currentTheme: currentTheme,
                       trailing: SegmentedButton<AppThemeStyle>(
                         segments: const [
                           ButtonSegment(value: AppThemeStyle.modern, label: Text('现代', style: TextStyle(fontSize: 10))),
                           ButtonSegment(value: AppThemeStyle.paper, label: Text('纸感', style: TextStyle(fontSize: 10))),
+                          ButtonSegment(value: AppThemeStyle.parchment, label: Text('羊皮纸', style: TextStyle(fontSize: 10))),
                           ButtonSegment(value: AppThemeStyle.golden, label: Text('黄金', style: TextStyle(fontSize: 10))),
                           ButtonSegment(value: AppThemeStyle.neumorphic, label: Text('新拟态', style: TextStyle(fontSize: 10))),
                         ],

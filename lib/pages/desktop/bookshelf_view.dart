@@ -45,7 +45,7 @@ class _BookshelfViewState extends State<BookshelfView> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 

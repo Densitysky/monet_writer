@@ -42,7 +42,7 @@ class _DesktopSidebarAvatarState extends State<DesktopSidebarAvatar> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
 
     final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;

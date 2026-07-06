@@ -18,7 +18,7 @@ class DesktopTrashView extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
 
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
     final currentTheme = userProvider.currentTheme;
     final bgColor = (isPaper || isNeumorphic) ? Theme.of(context).scaffoldBackgroundColor : currentTheme.backgroundColor;

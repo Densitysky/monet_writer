@@ -220,7 +220,7 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     final userProvider = context.watch<UserProvider>();
     final provider = context.watch<WritingProvider>();
 
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 

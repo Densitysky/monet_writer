@@ -92,7 +92,7 @@ class _DesktopBookCardState extends State<DesktopBookCard> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
 
     // 角标颜色 (模拟作家助手：连载中为蓝色，已完结/私密为深灰色)

@@ -129,7 +129,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
 
     // 【核心获取】：提取 ThemeProvider 中配置的 30% 结构灰底色

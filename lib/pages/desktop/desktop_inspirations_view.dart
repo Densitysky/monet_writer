@@ -35,7 +35,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
     final userProvider = context.watch<UserProvider>();
     final inspirationsProvider = context.watch<InspirationsProvider>();
 
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
     final themeData = Theme.of(context);
 

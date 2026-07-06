@@ -27,7 +27,7 @@ class DesktopEditorPanel extends StatelessWidget {
     final userProvider = context.watch<UserProvider>();
     final provider = context.watch<WritingProvider>();
 
-    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isPaper = themeProvider.isPaperOrParchment;
     final currentTheme = userProvider.currentTheme;
 
     return Column(
