@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:monet_writer/utils/monet_animations.dart';
 
 /// Monet Writer 启动页
 /// 展示品牌图标和名称，带有优雅的展开动画，动画完成后跳转至主页面
@@ -33,7 +35,7 @@ class _SplashPageState extends State<SplashPage>
     ]).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack),
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
       ),
     );
 
@@ -48,21 +50,29 @@ class _SplashPageState extends State<SplashPage>
       parent: _controller,
       curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
     );
+  }
 
-    // 动画结束后跳转
-    _controller.forward().then((_) {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              widget.nextPage,
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
-      );
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+    }
+    if (!_controller.isAnimating && _controller.value == 0.0) {
+      _controller.forward().then((_) {
+        if (!mounted) return;
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => widget.nextPage,
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: MediaQuery.of(context).disableAnimations ? Duration.zero : MonetDurations.page,
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -72,7 +82,6 @@ class _SplashPageState extends State<SplashPage>
   }
 
   Widget _buildIcon() {
-    // 使用与 App 图标一致的 Monet 水彩图标
     return Container(
       width: 120,
       height: 120,
@@ -105,7 +114,17 @@ class _SplashPageState extends State<SplashPage>
     final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFFAFAFA);
     final textColor = isDark ? Colors.white : const Color(0xFF2D2D2D);
 
-    return Scaffold(
+    // 进入全屏
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+      child: Scaffold(
       backgroundColor: bgColor,
       body: AnimatedBuilder(
         animation: _controller,
@@ -113,7 +132,7 @@ class _SplashPageState extends State<SplashPage>
           return Stack(
             fit: StackFit.expand,
             children: [
-              // 图标固定居中 — 与原生启动图位置一致
+              // 图标固定居中
               Center(
                 child: Opacity(
                   opacity: _fadeAnim.value,
@@ -123,7 +142,7 @@ class _SplashPageState extends State<SplashPage>
                   ),
                 ),
               ),
-              // 品牌文字和加载指示器 — 在图标上方(偏移后视觉上在下方)
+              // 品牌文字和加载指示器
               Positioned(
                 top: MediaQuery.sizeOf(context).height * 0.5 + 84,
                 left: 0,
@@ -173,6 +192,6 @@ class _SplashPageState extends State<SplashPage>
         },
         child: _buildIcon(),
       ),
-    );
+    ));
   }
 }

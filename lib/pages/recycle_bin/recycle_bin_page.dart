@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:monet_writer/models/book/book.dart';
+import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/widgets/monet_book_cover.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
 
 class RecycleBinPage extends StatelessWidget {
   const RecycleBinPage({super.key});
@@ -63,14 +66,11 @@ class _DeletedBookItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final themeProvider = context.watch<ThemeProvider>();
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
-      ),
+    final content = Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
@@ -94,13 +94,13 @@ class _DeletedBookItem extends StatelessWidget {
               children: [
                 Text(
                   book.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onSurface),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '删除时间: ${dateFormat.format(book.updatedAt)}', // 这里暂时用 updatedAt 近似代替
+                  '删除时间: ${dateFormat.format(book.updatedAt)}',
                   style: TextStyle(color: theme.colorScheme.outline, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
@@ -139,6 +139,22 @@ class _DeletedBookItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (isNeumorphic) {
+      return AppCard(
+        padding: EdgeInsets.zero,
+        child: content,
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+      ),
+      child: content,
     );
   }
 

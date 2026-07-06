@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:monet_writer/models/book/daily_stats.dart';
+import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/services/database_service.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
 
 class StatsPage extends StatefulWidget {
   const StatsPage({super.key});
@@ -87,6 +90,9 @@ class _StatsPageState extends State<StatsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+
     return Scaffold(
       appBar: AppBar(title: const Text('数据统计')),
       body: _isLoading
@@ -94,18 +100,18 @@ class _StatsPageState extends State<StatsPage> {
           : ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildTrendChart(context),
+          _buildTrendChart(context, isNeumorphic),
           const SizedBox(height: 24),
-          _buildKeyMetrics(context),
+          _buildKeyMetrics(context, isNeumorphic),
           const SizedBox(height: 24),
-          _buildMonthlySummary(context),
+          _buildMonthlySummary(context, isNeumorphic),
         ],
       ),
     );
   }
 
   // --- 1. 趋势图表 (Bar Chart) ---
-  Widget _buildTrendChart(BuildContext context) {
+  Widget _buildTrendChart(BuildContext context, bool isNeumorphic) {
     final theme = Theme.of(context);
 
     int maxVal = 100;
@@ -113,82 +119,79 @@ class _StatsPageState extends State<StatsPage> {
       if (s.wordCount > maxVal) maxVal = s.wordCount;
     }
 
-    // 【核心修复】将 Container 替换为 Card，使其自动读取全局主题 (扁平风/现代风)
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final chartContent = Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('近 7 天趋势', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              if (_weeklyData.isNotEmpty)
+                Text(
+                    '今日: ${_weeklyData.last.wordCount}',
+                    style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)
+                ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 180,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('近 7 天趋势', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                if (_weeklyData.isNotEmpty)
-                  Text(
-                      '今日: ${_weeklyData.last.wordCount}',
-                      style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)
-                  ),
-              ],
-            ),
-            const SizedBox(height: 24),
+              children: _weeklyData.map((stat) {
+                final isToday = stat.date.day == DateTime.now().day && stat.date.month == DateTime.now().month;
+                final heightFactor = maxVal > 0 ? stat.wordCount / maxVal : 0.0;
+                final dateLabel = DateFormat('dd').format(stat.date);
 
-            // 柱状图主体
-            SizedBox(
-              height: 180,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: _weeklyData.map((stat) {
-                  final isToday = stat.date.day == DateTime.now().day && stat.date.month == DateTime.now().month;
-                  final heightFactor = stat.wordCount / maxVal;
-                  final dateLabel = DateFormat('dd').format(stat.date);
-
-                  return Expanded(
-                    child: Tooltip(
-                      message: '${stat.wordCount} 字\n${DateFormat('MM/dd').format(stat.date)}',
-                      triggerMode: TooltipTriggerMode.tap,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Flexible(
-                            child: FractionallySizedBox(
-                              heightFactor: heightFactor == 0 ? 0.02 : heightFactor,
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 6),
-                                decoration: BoxDecoration(
-                                  color: isToday
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.primary.withValues(alpha: 0.3),
-                                  // 内部柱状图圆角稍作收敛，适配两种风格
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
+                return Expanded(
+                  child: Tooltip(
+                    message: '${stat.wordCount} 字\n${DateFormat('MM/dd').format(stat.date)}',
+                    triggerMode: TooltipTriggerMode.tap,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          child: FractionallySizedBox(
+                            heightFactor: heightFactor == 0 ? 0.02 : heightFactor,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 6),
+                              decoration: BoxDecoration(
+                                color: isToday
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.primary.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(4),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            dateLabel,
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: isToday ? theme.colorScheme.primary : theme.colorScheme.outline
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          dateLabel,
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: isToday ? theme.colorScheme.primary : theme.colorScheme.outline
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                );
+              }).toList(),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+
+    return isNeumorphic ? AppCard(padding: EdgeInsets.zero, child: chartContent) : Card(child: chartContent);
   }
 
   // --- 2. 核心指标看板 (Grid) ---
-  Widget _buildKeyMetrics(BuildContext context) {
+  Widget _buildKeyMetrics(BuildContext context, bool isNeumorphic) {
+    final accent = Theme.of(context).colorScheme.primary;
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -198,58 +201,49 @@ class _StatsPageState extends State<StatsPage> {
       childAspectRatio: 1.6,
       children: [
         _MetricCard(
-          icon: Icons.emoji_events_outlined,
-          label: '单日峰值',
-          value: _peakCount.toString(),
-          subText: _peakDateStr,
-          color: Colors.amber,
+          icon: Icons.emoji_events_outlined, label: '单日峰值',
+          value: _peakCount.toString(), subText: _peakDateStr,
+          color: accent.withValues(alpha: 1.0), isNeumorphic: isNeumorphic,
         ),
         _MetricCard(
-          icon: Icons.speed,
-          label: '日均产量',
-          value: _avgCount.toString(),
-          subText: '平均水平',
-          color: Colors.blue,
+          icon: Icons.speed, label: '日均产量',
+          value: _avgCount.toString(), subText: '平均水平',
+          color: accent.withValues(alpha: 0.80), isNeumorphic: isNeumorphic,
         ),
         _MetricCard(
-          icon: Icons.date_range,
-          label: '本周总计',
-          value: _weeklyTotal.toString(),
-          subText: '近7天',
-          color: Colors.green,
+          icon: Icons.date_range, label: '本周总计',
+          value: _weeklyTotal.toString(), subText: '近7天',
+          color: accent.withValues(alpha: 0.65), isNeumorphic: isNeumorphic,
         ),
         _MetricCard(
-          icon: Icons.edit_calendar,
-          label: '打卡天数',
-          value: _totalActiveDays.toString(),
-          subText: '总活跃',
-          color: Colors.purple,
+          icon: Icons.edit_calendar, label: '打卡天数',
+          value: _totalActiveDays.toString(), subText: '总活跃',
+          color: accent.withValues(alpha: 0.90), isNeumorphic: isNeumorphic,
         ),
       ],
     );
   }
 
   // --- 3. 本月概览 ---
-  Widget _buildMonthlySummary(BuildContext context) {
+  Widget _buildMonthlySummary(BuildContext context, bool isNeumorphic) {
     final theme = Theme.of(context);
     final now = DateTime.now();
 
-    // 【核心修复】同样将 Container 替换为 Card
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${now.month}月 概览', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            _SummaryRow(label: '本月累计字数', value: '$_monthTotal 字'),
-            const Divider(height: 24),
-            _SummaryRow(label: '本月打卡天数', value: '$_monthActiveDays 天'),
-          ],
-        ),
+    final summaryContent = Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('${now.month}月 概览', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          _SummaryRow(label: '本月累计字数', value: '$_monthTotal 字'),
+          const Divider(height: 24),
+          _SummaryRow(label: '本月打卡天数', value: '$_monthActiveDays 天'),
+        ],
       ),
     );
+
+    return isNeumorphic ? AppCard(padding: EdgeInsets.zero, child: summaryContent) : Card(child: summaryContent);
   }
 }
 
@@ -259,37 +253,37 @@ class _MetricCard extends StatelessWidget {
   final String value;
   final String subText;
   final Color color;
+  final bool isNeumorphic;
 
   const _MetricCard({
     required this.icon, required this.label, required this.value,
-    required this.subText, required this.color
+    required this.subText, required this.color, this.isNeumorphic = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // 【核心修复】去除硬编码圆角和颜色，拥抱全局 CardTheme
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: color),
-                const SizedBox(width: 8),
-                Text(label, style: TextStyle(fontSize: 12, color: theme.colorScheme.outline)),
-              ],
-            ),
-            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            Text(subText, style: TextStyle(fontSize: 10, color: theme.colorScheme.outlineVariant)),
-          ],
-        ),
+    final content = Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 8),
+              Text(label, style: TextStyle(fontSize: 12, color: theme.colorScheme.outline)),
+            ],
+          ),
+          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+          Text(subText, style: TextStyle(fontSize: 10, color: theme.colorScheme.outlineVariant)),
+        ],
       ),
     );
+
+    return isNeumorphic ? AppCard(padding: EdgeInsets.zero, child: content) : Card(child: content);
   }
 }
 
@@ -304,7 +298,7 @@ class _SummaryRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
       ],
     );
   }

@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -8,13 +8,14 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:monet_writer/providers/user_provider.dart';
+import 'package:monet_writer/utils/monet_animations.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/pages/settings_page.dart';
 import 'package:monet_writer/pages/image_preview_page.dart';
 import 'package:monet_writer/pages/recycle_bin/recycle_bin_page.dart';
 import 'package:monet_writer/pages/stats/stats_page.dart';
 import 'package:monet_writer/pages/stats/calendar_page.dart';
-import 'package:monet_writer/utils/monet_animations.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -108,7 +109,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
   @override
   void initState() {
     super.initState();
-    _floatAnim = AnimationController(vsync: this, duration: const Duration(milliseconds: 280));
+    _floatAnim = AnimationController(vsync: this, duration: MonetDurations.component);
     _floatAnim.addListener(() => setState(() {}));
     _snapAnim = AnimationController(vsync: this);
     _snapAnim.addListener(() {
@@ -120,6 +121,10 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _floatAnim.duration = Duration.zero;
+      _snapAnim.duration = Duration.zero;
+    }
     if (!_heightsInitialized) {
       _initHeights();
       _heightsInitialized = true;
@@ -194,11 +199,11 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
 
     if (isOverShot) {
       // 弹回边界，延长动画到 400ms
-      _snapAnim.duration = const Duration(milliseconds: 400);
+      _snapAnim.duration = MediaQuery.of(context).disableAnimations ? Duration.zero : MonetDurations.page;
       target = _currentHeight.clamp(_minHeight, _maxHeight);
     } else {
       // 找最近磁吸点
-      _snapAnim.duration = const Duration(milliseconds: 280);
+      _snapAnim.duration = MediaQuery.of(context).disableAnimations ? Duration.zero : MonetDurations.component;
       double nearest = _minHeight;
       double minDist = (_currentHeight - _minHeight).abs();
       for (final pt in [_minHeight, _midHeight, _maxHeight]) {
@@ -220,7 +225,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
 
   // ---- 封面更换 ----
 
-  void _showChangeCoverSheet(UserProvider userProvider, bool isFlat) {
+  void _showChangeCoverSheet(UserProvider userProvider, bool isPaper) {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
@@ -228,13 +233,13 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
       builder: (ctx) => Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(isFlat ? 0.0 : 24.0)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(isPaper ? 0.0 : 24.0)),
         ),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (!isFlat)
+              if (!isPaper)
                 const Column(children: [
                   SizedBox(height: 12),
                   _HandleBar(),
@@ -333,22 +338,22 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
     }
   }
 
-  void _showEditNicknameDialog(UserProvider user, bool isFlat) {
+  void _showEditNicknameDialog(UserProvider user, bool isPaper) {
     final controller = TextEditingController(text: user.nickname);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
         title: const Text('修改昵称'),
         content: TextField(
           controller: controller,
           maxLength: 12,
-          decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0))),
+          decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0))),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0))),
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
             onPressed: () {
               if (controller.text.isNotEmpty) {
                 user.updateNickname(controller.text);
@@ -380,7 +385,8 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>();
     final theme = Theme.of(context);
-    final isFlat = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.flat;
+    final isPaper = context.watch<ThemeProvider>().isPaperOrParchment;
+    final isNeumorphic = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.neumorphic;  //柔和模式
 
     if (!_heightsInitialized) {
       return const SizedBox(height: _minHeight);
@@ -395,6 +401,9 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
 
     // 背景层 — 顶部固定对齐，拖拽时底部自然裁剪
     final String? bgPath = user.profileCoverPath ?? user.avatarPath;
+    final primary = theme.colorScheme.primary;
+    // 自动计算背景上的文字对比色（深色背景→白字，浅色背景→黑字）
+    final textColor = primary.computeLuminance() > 0.5 ? Colors.black : Colors.white;
     Widget backgroundLayer;
     if (bgPath != null) {
       backgroundLayer = Image.file(
@@ -405,28 +414,25 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
         height: h,
       );
     } else {
-      final color = theme.colorScheme.primary;
-      backgroundLayer = Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color, color.withValues(alpha: 0.6)],
-          ),
-        ),
-      );
+      // 纯色背景替代渐变
+      backgroundLayer = Container(color: primary);
     }
 
-    return AnimatedBuilder(
+    return Padding(
+      padding: isNeumorphic ? const EdgeInsets.fromLTRB(12, 12, 12, 0) : EdgeInsets.zero,
+      child: AnimatedBuilder(
       animation: _floatAnim,
       builder: (context, child) {
         // 浮动态：加阴影 + 上浮
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(isFlat ? 0.0 : 30.0),
-              bottomRight: Radius.circular(isFlat ? 0.0 : 30.0),
-            ),
+            // 柔和模式：四周圆角卡片；其他模式：仅底部圆角
+            borderRadius: isNeumorphic
+                ? BorderRadius.circular(24)
+                : BorderRadius.only(
+                    bottomLeft: Radius.circular(isPaper ? 0.0 : 30.0),
+                    bottomRight: Radius.circular(isPaper ? 0.0 : 30.0),
+                  ),
             boxShadow: t > 0.01
                 ? [
                     BoxShadow(
@@ -435,7 +441,13 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                       offset: Offset(0, 6 * t),
                     ),
                   ]
-                : null,
+                : isNeumorphic
+                    ? const [
+                        // 柔和模式：完整新拟态双阴影，让头部浮在背景上
+                        BoxShadow(color: Color(0xFFFFFFFF), offset: Offset(-4, -4), blurRadius: 10),
+                        BoxShadow(color: Color(0xFFC5CEDC), offset: Offset(4, 4), blurRadius: 18),
+                      ]
+                    : null,
           ),
           child: Transform.translate(
             offset: Offset(0, -4 * t),
@@ -448,8 +460,8 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isFlat ? 0.0 : 30.0),
-            bottomRight: Radius.circular(isFlat ? 0.0 : 30.0),
+            bottomLeft: Radius.circular(isPaper ? 0.0 : 30.0),
+            bottomRight: Radius.circular(isPaper ? 0.0 : 30.0),
           ),
         ),
         child: Stack(
@@ -457,7 +469,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
           children: [
             // 背景层 — 长按/点击手势只在此区域生效
             GestureDetector(
-              onTap: () => _showChangeCoverSheet(user, isFlat),
+              onTap: () => _showChangeCoverSheet(user, isPaper),
               onLongPressStart: _onFloatStart,
               onLongPressMoveUpdate: _onFloatMove,
               onLongPressEnd: _onFloatEnd,
@@ -470,7 +482,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                   // 浮动态遮罩
                   if (_isFloating)
                     Positioned.fill(
-                      child: Container(color: Colors.white.withValues(alpha: 0.08)),
+                      child: Container(color: textColor.withValues(alpha: 0.08)),
                     ),
                 ],
               ),
@@ -485,7 +497,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                 child: Padding(
                   padding: const EdgeInsets.only(top: 4, right: 8),
                   child: IconButton(
-                    icon: Icon(Icons.settings, color: Colors.white.withValues(alpha: _isFloating ? 0.4 : 1.0)),
+                    icon: Icon(Icons.settings, color: textColor.withValues(alpha: _isFloating ? 0.4 : 1.0)),
                     onPressed: _isFloating ? null : () {
                       Navigator.push(context, MonetPageRoute(builder: (_) => const SettingsPage()));
                     },
@@ -521,7 +533,18 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                                 padding: const EdgeInsets.all(2),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(isFlat ? 8.0 : 100.0),
+                                  borderRadius: BorderRadius.circular(isPaper ? 8.0 : 100.0),
+                                  // 浅色背景时白圈需要灰色描边，否则和背景融为一体
+                                  border: (isNeumorphic && textColor == Colors.black)
+                                      ? Border.all(color: Colors.grey.shade300, width: 1)
+                                      : null,
+                                  // 新拟态浮雕
+                                  boxShadow: isNeumorphic
+                                      ? const [
+                                          BoxShadow(color: Color(0xFFFFFFFF), offset: Offset(-3, -3), blurRadius: 6),
+                                          BoxShadow(color: Color(0xFFC5CEDC), offset: Offset(3, 3), blurRadius: 10),
+                                        ]
+                                      : null,
                                 ),
                                 child: Container(
                                   width: 84,
@@ -529,7 +552,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                                   clipBehavior: Clip.antiAlias,
                                   decoration: BoxDecoration(
                                     color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(isFlat ? 6.0 : 100.0),
+                                    borderRadius: BorderRadius.circular(isPaper ? 6.0 : 100.0),
                                   ),
                                   child: user.avatarPath != null
                                       ? Image.file(File(user.avatarPath!), fit: BoxFit.cover)
@@ -550,7 +573,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                                       child: Text(
                                         user.nickname,
                                         style: theme.textTheme.headlineSmall?.copyWith(
-                                          color: Colors.white,
+                                          color: textColor,
                                           fontWeight: FontWeight.bold,
                                           height: 1.2,
                                         ),
@@ -560,8 +583,8 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: _isFloating ? null : () => _showEditNicknameDialog(user, isFlat),
-                                      child: Icon(Icons.edit_square, size: 18, color: Colors.white70),
+                                      onTap: _isFloating ? null : () => _showEditNicknameDialog(user, isPaper),
+                                      child: Icon(Icons.edit_square, size: 18, color: textColor.withValues(alpha: 0.7)),
                                     ),
                                   ],
                                 ),
@@ -569,12 +592,12 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.25),
-                                    borderRadius: BorderRadius.circular(isFlat ? 2.0 : 12.0),
+                                    color: textColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(isPaper ? 2.0 : 12.0),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Lv.1 筑基期',
-                                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                    style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w600),
                                   ),
                                 ),
                               ],
@@ -590,11 +613,11 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _StatItem(value: user.consecutiveDays.toString(), label: '连续创作(天)'),
-                            const SizedBox(height: 20, child: VerticalDivider(color: Colors.white24)),
-                            _StatItem(value: _formatNumber(user.totalWords), label: '累计字数'),
-                            const SizedBox(height: 20, child: VerticalDivider(color: Colors.white24)),
-                            _StatItem(value: user.todayWords.toString(), label: '今日码字'),
+                            _StatItem(value: user.consecutiveDays.toString(), label: '连续创作(天)', color: textColor),
+                            SizedBox(height: 20, child: VerticalDivider(color: textColor.withValues(alpha: 0.15))),
+                            _StatItem(value: _formatNumber(user.totalWords), label: '累计字数', color: textColor),
+                            SizedBox(height: 20, child: VerticalDivider(color: textColor.withValues(alpha: 0.15))),
+                            _StatItem(value: user.todayWords.toString(), label: '今日码字', color: textColor),
                           ],
                         ),
                       ),
@@ -602,7 +625,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                       // 浮动拖拽指示条
                       AnimatedOpacity(
                         opacity: _isFloating ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 200),
+                        duration: MediaQuery.of(context).disableAnimations ? Duration.zero : MonetDurations.quick,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Center(
@@ -610,7 +633,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
                               width: 44,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: textColor.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -625,6 +648,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -634,16 +658,17 @@ class _ProfileHeaderState extends State<_ProfileHeader> with TickerProviderState
 class _StatItem extends StatelessWidget {
   final String value;
   final String label;
-  const _StatItem({required this.value, required this.label});
+  final Color color;
+  const _StatItem({required this.value, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+        Text(value, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(label, style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 12)),
       ],
     );
   }
@@ -657,20 +682,31 @@ class _GridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeProvider = context.watch<ThemeProvider>();
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+
+    final content = Column(
+      children: [
+        Icon(icon, size: 30, color: theme.colorScheme.primary),
+        const SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface)),
+      ],
+    );
+
     return BouncingWidget(
       onTap: onTap,
       scaleFactor: 0.9,
-      child: Container(
-        width: 100,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          children: [
-            Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 13)),
-          ],
-        ),
-      ),
+      child: isNeumorphic
+          ? AppCard(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: SizedBox(width: 100, child: content),
+            )
+          : Container(
+              width: 100,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: content,
+            ),
     );
   }
 }
@@ -686,3 +722,4 @@ class _HandleBar extends StatelessWidget {
     );
   }
 }
+

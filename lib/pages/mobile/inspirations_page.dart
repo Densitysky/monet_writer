@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/inspirations_provider.dart';
+import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/utils/inspiration_tag_colors.dart';
 import 'package:monet_writer/utils/app_strings.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
+import 'package:monet_writer/widgets/theme/app_divider.dart';
 
 /// 移动端灵感碎片页面
 class InspirationsPage extends StatefulWidget {
@@ -38,7 +41,11 @@ class _InspirationsPageState extends State<InspirationsPage> {
     final activeTag = context.select<InspirationsProvider, String>((p) => p.activeTag);
     final provider = context.read<InspirationsProvider>();
     final theme = Theme.of(context);
+    final themeProvider = context.watch<ThemeProvider>();
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final textColor = theme.colorScheme.onSurface;
+    final accentColor = theme.colorScheme.primary;
     final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.5);
     final hintColor = theme.colorScheme.onSurface.withValues(alpha: 0.25);
     final bgColor = theme.scaffoldBackgroundColor;
@@ -59,7 +66,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
       body: Column(
         children: [
           // 标签筛选
-          _buildTagBar(provider, textColor, mutedColor, isDark),
+          _buildTagBar(provider, textColor, accentColor, mutedColor, isDark, isNeumorphic),
           // 内容区
           Expanded(
             child: fragments.isEmpty
@@ -76,6 +83,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
                         mutedColor,
                         hintColor,
                         isDark,
+                        isNeumorphic,
                       );
                     },
                   ),
@@ -89,7 +97,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
     );
   }
 
-  Widget _buildTagBar(InspirationsProvider provider, Color textColor, Color mutedColor, bool isDark) {
+  Widget _buildTagBar(InspirationsProvider provider, Color textColor, Color accentColor, Color mutedColor, bool isDark, bool isNeumorphic) {
     return Container(
       height: 40,
       padding: const EdgeInsets.only(left: 16),
@@ -100,7 +108,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
         itemBuilder: (context, index) {
           final tag = InspirationsProvider.availableTags[index];
           final isActive = provider.activeTag == tag;
-          return GestureDetector(
+          final chip = GestureDetector(
             onTap: () => provider.setActiveTag(tag),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
@@ -108,9 +116,9 @@ class _InspirationsPageState extends State<InspirationsPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(100),
                 border: Border.all(
-                  color: isActive ? textColor : mutedColor.withValues(alpha: 0.2),
+                  color: isActive ? accentColor : mutedColor.withValues(alpha: 0.2),
                 ),
-                color: isActive ? textColor : Colors.transparent,
+                color: isActive ? accentColor : Colors.transparent,
               ),
               alignment: Alignment.center,
               child: Text(
@@ -119,12 +127,17 @@ class _InspirationsPageState extends State<InspirationsPage> {
                   fontSize: 12,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                   color: isActive
-                      ? (isDark ? Colors.black : Colors.white)
+                      ? (accentColor.computeLuminance() > 0.5 ? Colors.black : Colors.white)
                       : mutedColor,
                 ),
               ),
             ),
           );
+          // 柔和模式下 active 标签用 AppCard 包裹，做出轻微浮雕
+          if (isNeumorphic && isActive) {
+            return AppCard(padding: EdgeInsets.zero, child: chip);
+          }
+          return chip;
         },
       ),
     );
@@ -137,8 +150,71 @@ class _InspirationsPageState extends State<InspirationsPage> {
     Color mutedColor,
     Color hintColor,
     bool isDark,
+    bool isNeumorphic,
   ) {
     final tagInfo = getInspirationTagColor(fragment.tag);
+    final cardContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 主内容
+        Text(
+          fragment.content,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+            height: 1.5,
+          ),
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (fragment.note != null && fragment.note!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            fragment.note!,
+            style: TextStyle(fontSize: 12, color: mutedColor, height: 1.4),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const SizedBox(height: 8),
+        // 底部
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: tagInfo.$1,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                fragment.tag,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: tagInfo.$2),
+              ),
+            ),
+            if (fragment.bookTitle != null) ...[
+              const SizedBox(width: 6),
+              Text(fragment.bookTitle!, style: TextStyle(fontSize: 11, color: mutedColor)),
+            ],
+            const Spacer(),
+            Text(
+              _formatTime(fragment.updateTime),
+              style: TextStyle(fontSize: 11, color: hintColor),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    if (isNeumorphic) {
+      return AppCard(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        onTap: () => _showRecordSheet(context, provider, fragment: fragment),
+        child: cardContent,
+      );
+    }
+
     return GestureDetector(
       onTap: () => _showRecordSheet(context, provider, fragment: fragment),
       child: Container(
@@ -149,58 +225,7 @@ class _InspirationsPageState extends State<InspirationsPage> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: textColor.withValues(alpha: 0.08)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 主内容
-            Text(
-              fragment.content,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-                height: 1.5,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (fragment.note != null && fragment.note!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                fragment.note!,
-                style: TextStyle(fontSize: 12, color: mutedColor, height: 1.4),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: 8),
-            // 底部
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: tagInfo.$1,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    fragment.tag,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: tagInfo.$2),
-                  ),
-                ),
-                if (fragment.bookTitle != null) ...[
-                  const SizedBox(width: 6),
-                  Text(fragment.bookTitle!, style: TextStyle(fontSize: 11, color: mutedColor)),
-                ],
-                const Spacer(),
-                Text(
-                  _formatTime(fragment.updateTime),
-                  style: TextStyle(fontSize: 11, color: hintColor),
-                ),
-              ],
-            ),
-          ],
-        ),
+        child: cardContent,
       ),
     );
   }
@@ -526,3 +551,4 @@ class _InspirationSearchDelegate extends SearchDelegate<String> {
     );
   }
 }
+
