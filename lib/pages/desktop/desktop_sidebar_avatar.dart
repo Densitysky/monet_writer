@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -42,10 +42,11 @@ class _DesktopSidebarAvatarState extends State<DesktopSidebarAvatar> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
 
-    final scaffoldBgColor = isFlat ? Theme.of(context).scaffoldBackgroundColor : currentTheme.backgroundColor;
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+    final scaffoldBgColor = (isPaper || isNeumorphic) ? Theme.of(context).scaffoldBackgroundColor : currentTheme.backgroundColor;
     final avatarDominantColor = userProvider.primaryColor;
     final avatarPath = userProvider.avatarPath;
     final nickname = userProvider.nickname ?? '创作者';
@@ -68,7 +69,7 @@ class _DesktopSidebarAvatarState extends State<DesktopSidebarAvatar> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [avatarDominantColor.withValues(alpha: 0.85), avatarDominantColor.withValues(alpha: 0.15)]),
-                boxShadow: isFlat ? null : [BoxShadow(color: avatarDominantColor.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                boxShadow: isPaper ? null : [BoxShadow(color: avatarDominantColor.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
               ),
               padding: const EdgeInsets.all(3.0),
               child: AnimatedScale(
@@ -98,13 +99,13 @@ class _DesktopSidebarAvatarState extends State<DesktopSidebarAvatar> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: avatarDominantColor.withValues(alpha: isFlat ? 0.08 : 0.15),
-            borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
-            border: Border.all(color: avatarDominantColor.withValues(alpha: isFlat ? 0.2 : 0.3)),
+            color: avatarDominantColor.withValues(alpha: isPaper ? 0.08 : 0.15),
+            borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
+            border: Border.all(color: avatarDominantColor.withValues(alpha: isPaper ? 0.2 : 0.3)),
           ),
           child: Text(
             levelTitle,
-            style: TextStyle(color: isFlat ? currentTheme.textColor : avatarDominantColor, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            style: TextStyle(color: isPaper ? currentTheme.textColor : avatarDominantColor, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
         ),
       ],

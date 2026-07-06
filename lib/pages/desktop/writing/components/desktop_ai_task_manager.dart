@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
@@ -35,7 +35,7 @@ class DesktopAiTaskIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -56,10 +56,10 @@ class DesktopAiTaskIndicator extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: isFlat ? currentTheme.backgroundColor : currentTheme.textColor.withValues(alpha: 0.05),
+                color: isPaper ? currentTheme.backgroundColor : currentTheme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(100),
                 border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-                boxShadow: isFlat ? null : [
+                boxShadow: isPaper ? null : [
                   BoxShadow(color: primaryColor.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))
                 ],
               ),

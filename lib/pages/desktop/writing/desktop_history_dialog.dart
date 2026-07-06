@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:isar/isar.dart';
@@ -71,15 +71,15 @@ class _DesktopHistoryDialogState extends State<DesktopHistoryDialog> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Dialog(
       backgroundColor: currentTheme.backgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
-        side: isFlat ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
+        side: isPaper ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
       ),
       child: SizedBox(
         width: 900,
@@ -158,7 +158,7 @@ class _DesktopHistoryDialogState extends State<DesktopHistoryDialog> {
                                 onPressed: _restoreSelected,
                                 icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 16),
                                 label: const Text('恢复此版本'),
-                                style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0))),
+                                style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0))),
                               )
                             ],
                           ),

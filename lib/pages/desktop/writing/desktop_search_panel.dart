@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -64,7 +64,7 @@ class _DesktopSearchPanelState extends State<DesktopSearchPanel> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -73,8 +73,8 @@ class _DesktopSearchPanelState extends State<DesktopSearchPanel> {
       constraints: const BoxConstraints(maxHeight: 500),
       decoration: BoxDecoration(
         color: currentTheme.backgroundColor,
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
-        boxShadow: isFlat ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 8))],
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
+        boxShadow: isPaper ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 8))],
         border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
@@ -101,9 +101,9 @@ class _DesktopSearchPanelState extends State<DesktopSearchPanel> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildTextField('查找内容...', _searchController, currentTheme, isFlat, onSubmitted: (_) => _performSearch()),
+                _buildTextField('查找内容...', _searchController, currentTheme, isPaper, onSubmitted: (_) => _performSearch()),
                 const SizedBox(height: 12),
-                _buildTextField('替换为...', _replaceController, currentTheme, isFlat),
+                _buildTextField('替换为...', _replaceController, currentTheme, isPaper),
                 const SizedBox(height: 16),
 
                 // 按钮组
@@ -112,7 +112,7 @@ class _DesktopSearchPanelState extends State<DesktopSearchPanel> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: widget.provider.isSearching ? null : _performSearch,
-                        style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 6.0))),
+                        style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 6.0))),
                         child: widget.provider.isSearching
                             ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Text('查找全部', style: TextStyle(fontSize: 12)),
@@ -122,7 +122,7 @@ class _DesktopSearchPanelState extends State<DesktopSearchPanel> {
                     Expanded(
                       child: FilledButton.tonal(
                         onPressed: _replaceCurrent,
-                        style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 6.0))),
+                        style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 6.0))),
                         child: const Text('本章替换', style: TextStyle(fontSize: 12)),
                       ),
                     ),
@@ -130,7 +130,7 @@ class _DesktopSearchPanelState extends State<DesktopSearchPanel> {
                     Expanded(
                       child: FilledButton(
                         onPressed: _replaceAll,
-                        style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 6.0))),
+                        style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 6.0))),
                         child: const Text('全局替换', style: TextStyle(fontSize: 12)),
                       ),
                     ),
@@ -174,10 +174,10 @@ class _DesktopSearchPanelState extends State<DesktopSearchPanel> {
     );
   }
 
-  Widget _buildTextField(String hint, TextEditingController controller, WritingTheme theme, bool isFlat, {Function(String)? onSubmitted}) {
+  Widget _buildTextField(String hint, TextEditingController controller, WritingTheme theme, bool isPaper, {Function(String)? onSubmitted}) {
     return Container(
       height: 36,
-      decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 6.0), border: isFlat ? Border.all(color: theme.textColor.withValues(alpha: 0.1)) : null),
+      decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 6.0), border: isPaper ? Border.all(color: theme.textColor.withValues(alpha: 0.1)) : null),
       child: TextField(
         controller: controller,
         style: TextStyle(color: theme.textColor, fontSize: 13),

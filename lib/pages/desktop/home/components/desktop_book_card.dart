@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:monet_writer/models/book/book.dart';
@@ -92,7 +92,7 @@ class _DesktopBookCardState extends State<DesktopBookCard> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
 
     // 角标颜色 (模拟作家助手：连载中为蓝色，已完结/私密为深灰色)
@@ -119,7 +119,7 @@ class _DesktopBookCardState extends State<DesktopBookCard> {
                 transform: Matrix4.translationValues(0, _isHovering ? -4 : 0, 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
-                  boxShadow: isFlat ? null : [
+                  boxShadow: isPaper ? null : [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: _isHovering ? 0.15 : 0.08),
                       blurRadius: _isHovering ? 16 : 8,
@@ -178,7 +178,7 @@ class _DesktopBookCardState extends State<DesktopBookCard> {
             ),
             const SizedBox(height: 12),
 
-            // ================== 2. 极简文字区域 ==================
+            // ================== 2. 纸感文字区域 ==================
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -218,3 +218,4 @@ class _DesktopBookCardState extends State<DesktopBookCard> {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
@@ -129,7 +129,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
 
     // 【核心获取】：提取 ThemeProvider 中配置的 30% 结构灰底色
@@ -139,8 +139,8 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
       // 【全局纯净】：整个弹窗统一使用 60% 主背景色 (纯白/深黑)
       backgroundColor: currentTheme.backgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isFlat ? 12.0 : 16.0),
-        side: isFlat ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.08)) : BorderSide.none,
+        borderRadius: BorderRadius.circular(isPaper ? 12.0 : 16.0),
+        side: isPaper ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.08)) : BorderSide.none,
       ),
       child: SizedBox(
         width: 800,
@@ -165,9 +165,9 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
                         height: 240, // 严格锁定 3:4 比例
                         decoration: BoxDecoration(
                           color: surfaceColor,
-                          borderRadius: BorderRadius.circular(isFlat ? 6.0 : 12.0),
-                          border: isFlat ? Border.all(color: currentTheme.textColor.withValues(alpha: 0.06)) : null,
-                          boxShadow: isFlat ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, 12))],
+                          borderRadius: BorderRadius.circular(isPaper ? 6.0 : 12.0),
+                          border: isPaper ? Border.all(color: currentTheme.textColor.withValues(alpha: 0.06)) : null,
+                          boxShadow: isPaper ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, 12))],
                         ),
                         child: Stack(
                           fit: StackFit.expand,
@@ -175,7 +175,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
                             // 封面底图
                             if (_coverPath != null && File(_coverPath!).existsSync())
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(isFlat ? 6.0 : 12.0),
+                                borderRadius: BorderRadius.circular(isPaper ? 6.0 : 12.0),
                                 child: Image.file(File(_coverPath!), fit: BoxFit.cover),
                               )
                             else
@@ -188,7 +188,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: Colors.black.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(isFlat ? 6.0 : 12.0),
+                                  borderRadius: BorderRadius.circular(isPaper ? 6.0 : 12.0),
                                 ),
                                 child: const Center(
                                   child: Column(
@@ -233,7 +233,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
                       children: [
                         Expanded(child: _buildInputField(label: '作者', controller: _authorController, theme: currentTheme)),
                         const SizedBox(width: 24),
-                        Expanded(child: _buildStatusToggle(currentTheme, isFlat, surfaceColor)),
+                        Expanded(child: _buildStatusToggle(currentTheme, isPaper, surfaceColor)),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -258,7 +258,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
                           onPressed: _save,
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 6.0 : 8.0)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 6.0 : 8.0)),
                           ),
                           child: const Text('保存书籍', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
@@ -311,7 +311,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
   }
 
   /// iOS 级连载状态滑动分段器 (Segmented Control)
-  Widget _buildStatusToggle(WritingTheme theme, bool isFlat, Color surfaceColor) {
+  Widget _buildStatusToggle(WritingTheme theme, bool isPaper, Color surfaceColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -322,13 +322,13 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: surfaceColor,
-            borderRadius: BorderRadius.circular(isFlat ? 6.0 : 8.0),
-            border: isFlat ? Border.all(color: theme.textColor.withValues(alpha: 0.05)) : null,
+            borderRadius: BorderRadius.circular(isPaper ? 6.0 : 8.0),
+            border: isPaper ? Border.all(color: theme.textColor.withValues(alpha: 0.05)) : null,
           ),
           child: Row(
             children: [
-              Expanded(child: _buildSegmentBtn(0, '连载中', theme, isFlat)),
-              Expanded(child: _buildSegmentBtn(1, '已完结', theme, isFlat)),
+              Expanded(child: _buildSegmentBtn(0, '连载中', theme, isPaper)),
+              Expanded(child: _buildSegmentBtn(1, '已完结', theme, isPaper)),
             ],
           ),
         ),
@@ -336,7 +336,7 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
     );
   }
 
-  Widget _buildSegmentBtn(int value, String text, WritingTheme theme, bool isFlat) {
+  Widget _buildSegmentBtn(int value, String text, WritingTheme theme, bool isPaper) {
     final isSelected = _status == value;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -349,9 +349,9 @@ class _DesktopBookDialogState extends State<DesktopBookDialog> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected ? theme.backgroundColor : Colors.transparent, // 选中时变成纯净的背景色色块
-            borderRadius: BorderRadius.circular(isFlat ? 4.0 : 6.0),
-            boxShadow: (isSelected && !isFlat) ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2))] : null,
-            border: (isSelected && isFlat) ? Border.all(color: theme.textColor.withValues(alpha: 0.05)) : null,
+            borderRadius: BorderRadius.circular(isPaper ? 4.0 : 6.0),
+            boxShadow: (isSelected && !isPaper) ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2))] : null,
+            border: (isSelected && isPaper) ? Border.all(color: theme.textColor.withValues(alpha: 0.05)) : null,
           ),
           child: Text(
             text,

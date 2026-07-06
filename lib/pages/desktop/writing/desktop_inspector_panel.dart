@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -9,31 +9,89 @@ import 'package:monet_writer/services/ai_service.dart';
 
 import 'package:monet_writer/pages/desktop/writing/components/inspector_character_tab.dart';
 import 'package:monet_writer/pages/desktop/writing/components/inspector_outline_tab.dart';
-// 【引入刚才新建的桌面专属排版组件】
 import 'package:monet_writer/pages/desktop/writing/components/inspector_format_tab.dart';
 
 class DesktopInspectorPanel extends StatefulWidget {
-  const DesktopInspectorPanel({super.key});
+  final int initialTab;
+  final ValueNotifier<int>? tabController;
+
+  final ValueNotifier<String?>? aiSelectedText;
+
+  const DesktopInspectorPanel({
+    super.key,
+    this.initialTab = 0,
+    this.tabController,
+    this.aiSelectedText,
+  });
 
   @override
   State<DesktopInspectorPanel> createState() => _DesktopInspectorPanelState();
 }
 
 class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
-  int _currentTabIndex = 0;
+  late int _currentTabIndex;
 
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
   final List<Map<String, dynamic>> _chatHistory = [
-    {'isAi': true, 'text': '你好！我是 Monet AI。\n在左侧选中文字，点击上方【润色】【扩写】可直接修改正文；\n或直接在下方输入框向我提问。', 'canInsert': false},
+    {'isAi': true, 'text': '你好！我是 Monet AI。\n在左侧选中文字，点击上方【润色】【扩写】可生成修改建议；\n满意后点击 AI 消息下方的「替换原文」应用修改。', 'canInsert': false, 'canReplace': false},
   ];
   bool _isAiTyping = false;
+  int? _replacedMessageIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTabIndex = widget.initialTab;
+    widget.tabController?.addListener(_onTabControllerChanged);
+    widget.aiSelectedText?.addListener(_onAiSelectedTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant DesktopInspectorPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tabController != oldWidget.tabController) {
+      oldWidget.tabController?.removeListener(_onTabControllerChanged);
+      widget.tabController?.addListener(_onTabControllerChanged);
+    }
+    if (widget.aiSelectedText != oldWidget.aiSelectedText) {
+      oldWidget.aiSelectedText?.removeListener(_onAiSelectedTextChanged);
+      widget.aiSelectedText?.addListener(_onAiSelectedTextChanged);
+    }
+    if (widget.initialTab != oldWidget.initialTab) {
+      _currentTabIndex = widget.initialTab;
+    }
+  }
 
   @override
   void dispose() {
+    widget.tabController?.removeListener(_onTabControllerChanged);
+    widget.aiSelectedText?.removeListener(_onAiSelectedTextChanged);
     _chatController.dispose();
     _chatScrollController.dispose();
     super.dispose();
+  }
+
+  void _onTabControllerChanged() {
+    if (widget.tabController != null) {
+      setState(() => _currentTabIndex = widget.tabController!.value);
+    }
+  }
+
+  String? _lastAiSelectedText;
+
+  void _onAiSelectedTextChanged() {
+    final text = widget.aiSelectedText?.value;
+    if (text == null || text.isEmpty || text == _lastAiSelectedText) return;
+    _lastAiSelectedText = text;
+
+    final provider = context.read<WritingProvider>();
+    final selection = provider.contentController.selection;
+    _sendUserMessage(
+      '请对以下文字进行文学性润色，使表达更流畅、更有感染力，保留原意：\n\n$text',
+      provider,
+      replaceRange: selection.isValid && !selection.isCollapsed ? selection : null,
+    );
   }
 
   void _scrollToBottom() {
@@ -51,27 +109,16 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
       return;
     }
 
-    setState(() => _isAiTyping = true);
-    try {
-      final aiProvider = context.read<AiProvider>();
-      await provider.replaceSelectionWithAi(aiProvider.config, instruction);
-
-      setState(() {
-        _chatHistory.add({'isAi': true, 'text': '✅ 已完成对选中文本的【$instruction】处理，并直接更新在正文中。', 'canInsert': false});
-      });
-      _scrollToBottom();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('处理失败: $e')));
-    } finally {
-      setState(() => _isAiTyping = false);
-    }
+    final selectedText = selection.textInside(provider.contentController.text);
+    final prompt = '请对以下文字进行$instruction，直接输出修改后的文本，不要解释：\n\n$selectedText';
+    await _sendUserMessage(prompt, provider, replaceRange: selection);
   }
 
-  Future<void> _sendUserMessage(String text, WritingProvider provider) async {
+  Future<void> _sendUserMessage(String text, WritingProvider provider, {TextSelection? replaceRange}) async {
     if (text.trim().isEmpty || _isAiTyping) return;
 
     setState(() {
-      _chatHistory.add({'isAi': false, 'text': text.trim(), 'canInsert': false});
+      _chatHistory.add({'isAi': false, 'text': text.trim(), 'canInsert': false, 'canReplace': false});
       _isAiTyping = true;
     });
     _chatController.clear();
@@ -84,13 +131,24 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
       }
 
       final content = await provider.getRecentContent(limit: 2);
-      final systemPrompt = '你是一个专业的小说写作助手。请根据用户的提问提供建设性的写作建议或灵感。必要时你可以参考以下近期的正文上下文：\n$content';
+      final systemPrompt = replaceRange != null
+          ? '你是一个专业的小说写作助手。请直接输出修改后的正文，不要输出任何解释、前缀或总结。'
+          : '你是一个专业的小说写作助手。请根据用户的提问提供建设性的写作建议或灵感。必要时你可以参考以下近期的正文上下文：\n$content';
 
       final response = await AiService.generateText(aiProvider.config, systemPrompt: systemPrompt, userPrompt: text);
 
       if (mounted) {
         setState(() {
-          _chatHistory.add({'isAi': true, 'text': response.trim(), 'canInsert': true});
+          _chatHistory.add({
+            'isAi': true,
+            'text': response.trim(),
+            'canInsert': replaceRange == null,
+            'canReplace': replaceRange != null,
+            'replaceStart': replaceRange?.start,
+            'replaceEnd': replaceRange?.end,
+            'originalText': replaceRange?.textInside(provider.contentController.text),
+            'isReplaced': false,
+          });
           _isAiTyping = false;
         });
         _scrollToBottom();
@@ -98,12 +156,62 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _chatHistory.add({'isAi': true, 'text': '❌ 请求失败: ${e.toString().replaceAll('Exception: ', '')}', 'canInsert': false});
+          _chatHistory.add({'isAi': true, 'text': '❌ 请求失败: ${e.toString().replaceAll('Exception: ', '')}', 'canInsert': false, 'canReplace': false});
           _isAiTyping = false;
         });
         _scrollToBottom();
       }
     }
+  }
+
+  void _replaceSelection(String newText, int start, int end, int messageIndex) {
+    final provider = context.read<WritingProvider>();
+    final currentText = provider.contentController.text;
+    final updatedText = currentText.replaceRange(start, end, newText);
+
+    provider.contentController.value = TextEditingValue(
+      text: updatedText,
+      selection: TextSelection.collapsed(offset: start + newText.length),
+    );
+    provider.onContentChanged();
+
+    setState(() {
+      _chatHistory[messageIndex]['isReplaced'] = true;
+      _replacedMessageIndex = messageIndex;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ 已替换选中文本')));
+  }
+
+  void _undoReplace() {
+    final index = _replacedMessageIndex;
+    if (index == null) return;
+
+    final msg = _chatHistory[index];
+    final start = msg['replaceStart'] as int?;
+    final end = msg['replaceEnd'] as int?;
+    final originalText = msg['originalText'] as String?;
+    final newText = msg['text'] as String?;
+
+    if (start == null || end == null || originalText == null || newText == null) return;
+
+    final provider = context.read<WritingProvider>();
+    final currentText = provider.contentController.text;
+    final newEnd = start + newText.length;
+    final restoredText = currentText.replaceRange(start, newEnd, originalText);
+
+    provider.contentController.value = TextEditingValue(
+      text: restoredText,
+      selection: TextSelection.collapsed(offset: start + originalText.length),
+    );
+    provider.onContentChanged();
+
+    setState(() {
+      _chatHistory[index]['isReplaced'] = false;
+      _replacedMessageIndex = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('↩️ 已撤销替换')));
   }
 
   @override
@@ -112,24 +220,23 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     final userProvider = context.watch<UserProvider>();
     final provider = context.watch<WritingProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Column(
       children: [
-        _buildTabBar(currentTheme, primaryColor, isFlat),
+        _buildTabBar(currentTheme, primaryColor, isPaper),
         Divider(height: 1, color: currentTheme.textColor.withValues(alpha: 0.05)),
 
         Expanded(
           child: IndexedStack(
             index: _currentTabIndex,
             children: [
-              InspectorOutlineTab(currentTheme: currentTheme, isFlat: isFlat, primaryColor: primaryColor),
-              InspectorCharacterTab(currentTheme: currentTheme, isFlat: isFlat, primaryColor: primaryColor),
-              // 【核心】挂载专属的桌面排版组件
-              InspectorFormatTab(currentTheme: currentTheme, isFlat: isFlat, primaryColor: primaryColor),
-              _buildAiChatView(currentTheme, isFlat, primaryColor, provider),
+              InspectorOutlineTab(currentTheme: currentTheme, isPaper: isPaper, primaryColor: primaryColor),
+              InspectorCharacterTab(currentTheme: currentTheme, isPaper: isPaper, primaryColor: primaryColor),
+              InspectorFormatTab(currentTheme: currentTheme, isPaper: isPaper, primaryColor: primaryColor),
+              _buildAiChatView(currentTheme, isPaper, primaryColor, provider),
             ],
           ),
         ),
@@ -137,28 +244,28 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     );
   }
 
-  Widget _buildTabBar(WritingTheme theme, Color primary, bool isFlat) {
+  Widget _buildTabBar(WritingTheme theme, Color primary, bool isPaper) {
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Container(
         decoration: BoxDecoration(
           color: theme.textColor.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0),
+          borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0),
         ),
         child: Row(
           children: [
-            _buildTabButton('大纲', 0, theme, primary, isFlat),
-            _buildTabButton('角色', 1, theme, primary, isFlat),
-            _buildTabButton('排版', 2, theme, primary, isFlat),
-            _buildTabButton('✨ AI', 3, theme, primary, isFlat),
+            _buildTabButton('大纲', 0, theme, primary, isPaper),
+            _buildTabButton('角色', 1, theme, primary, isPaper),
+            _buildTabButton('排版', 2, theme, primary, isPaper),
+            _buildTabButton('✨ AI', 3, theme, primary, isPaper),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTabButton(String title, int index, WritingTheme theme, Color primary, bool isFlat) {
+  Widget _buildTabButton(String title, int index, WritingTheme theme, Color primary, bool isPaper) {
     final isSelected = _currentTabIndex == index;
     return Expanded(
       child: GestureDetector(
@@ -169,8 +276,8 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
           margin: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             color: isSelected ? theme.backgroundColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(isFlat ? 4.0 : 6.0),
-            boxShadow: isSelected && !isFlat ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))] : [],
+            borderRadius: BorderRadius.circular(isPaper ? 4.0 : 6.0),
+            boxShadow: isSelected && !isPaper ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))] : [],
           ),
           alignment: Alignment.center,
           child: Text(
@@ -182,7 +289,7 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     );
   }
 
-  Widget _buildAiChatView(WritingTheme theme, bool isFlat, Color primary, WritingProvider provider) {
+  Widget _buildAiChatView(WritingTheme theme, bool isPaper, Color primary, WritingProvider provider) {
     return Column(
       children: [
         Container(
@@ -192,29 +299,67 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildAiQuickAction('原位润色', CupertinoIcons.sparkles, theme, primary, isFlat, () => _handleInlineAiAction('进行文学性润色，保留原意', provider)),
-                _buildAiQuickAction('扩写描写', CupertinoIcons.arrow_up_left_arrow_down_right, theme, primary, isFlat, () => _handleInlineAiAction('扩写细节描写，增加环境和心理渲染', provider)),
-                _buildAiQuickAction('精简缩写', CupertinoIcons.arrow_down_right_arrow_up_left, theme, primary, isFlat, () => _handleInlineAiAction('精简多余废话，让节奏紧凑', provider)),
+                _buildAiQuickAction('原位润色', CupertinoIcons.sparkles, theme, primary, isPaper, () => _handleInlineAiAction('进行文学性润色，保留原意', provider)),
+                _buildAiQuickAction('扩写描写', CupertinoIcons.arrow_up_left_arrow_down_right, theme, primary, isPaper, () => _handleInlineAiAction('扩写细节描写，增加环境和心理渲染', provider)),
+                _buildAiQuickAction('精简缩写', CupertinoIcons.arrow_down_right_arrow_up_left, theme, primary, isPaper, () => _handleInlineAiAction('精简多余废话，让节奏紧凑', provider)),
               ],
             ),
           ),
         ),
+        if (_lastAiSelectedText != null && _lastAiSelectedText!.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 10.0),
+              border: Border.all(color: primary.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              children: [
+                Icon(CupertinoIcons.quote_bubble, size: 14, color: primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '已选中文本：$_lastAiSelectedText',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: primary),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Expanded(
           child: ListView.builder(
             controller: _chatScrollController,
             padding: const EdgeInsets.all(16),
             itemCount: _chatHistory.length + (_isAiTyping ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == _chatHistory.length && _isAiTyping) return _buildAiTypingIndicator(theme, primary, isFlat);
+              if (index == _chatHistory.length && _isAiTyping) return _buildAiTypingIndicator(theme, primary, isPaper);
               final msg = _chatHistory[index];
-              return _buildChatBubble(msg['text'], theme, primary, isFlat, isAi: msg['isAi'], canInsert: msg['canInsert'], provider: provider);
+              return _buildChatBubble(
+                msg['text'],
+                theme,
+                primary,
+                isPaper,
+                isAi: msg['isAi'],
+                canInsert: msg['canInsert'] ?? false,
+                canReplace: msg['canReplace'] ?? false,
+                replaceStart: msg['replaceStart'],
+                replaceEnd: msg['replaceEnd'],
+                originalText: msg['originalText'],
+                isReplaced: msg['isReplaced'] ?? false,
+                messageIndex: index,
+                provider: provider,
+              );
             },
           ),
         ),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isFlat ? theme.backgroundColor : theme.textColor.withValues(alpha: 0.02),
+            color: isPaper ? theme.backgroundColor : theme.textColor.withValues(alpha: 0.02),
             border: Border(top: BorderSide(color: theme.textColor.withValues(alpha: 0.05), width: 1)),
           ),
           child: Row(
@@ -226,8 +371,8 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: theme.textColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
-                    border: isFlat ? Border.all(color: theme.textColor.withValues(alpha: 0.1)) : null,
+                    borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
+                    border: isPaper ? Border.all(color: theme.textColor.withValues(alpha: 0.1)) : null,
                   ),
                   child: TextField(
                     controller: _chatController,
@@ -248,7 +393,7 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
               const SizedBox(width: 8),
               Container(
                 height: 40, width: 40,
-                decoration: BoxDecoration(color: _isAiTyping ? theme.textColor.withValues(alpha: 0.1) : primary, borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)),
+                decoration: BoxDecoration(color: _isAiTyping ? theme.textColor.withValues(alpha: 0.1) : primary, borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)),
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   icon: _isAiTyping
@@ -264,15 +409,15 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     );
   }
 
-  Widget _buildAiQuickAction(String label, IconData icon, WritingTheme theme, Color primary, bool isFlat, VoidCallback onTap) {
+  Widget _buildAiQuickAction(String label, IconData icon, WritingTheme theme, Color primary, bool isPaper, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(border: Border.all(color: primary.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0), color: primary.withValues(alpha: 0.05)),
+          decoration: BoxDecoration(border: Border.all(color: primary.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0), color: primary.withValues(alpha: 0.05)),
           child: Row(
             children: [
               Icon(icon, size: 12, color: primary),
@@ -285,13 +430,13 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     );
   }
 
-  Widget _buildAiTypingIndicator(WritingTheme theme, Color primary, bool isFlat) {
+  Widget _buildAiTypingIndicator(WritingTheme theme, Color primary, bool isPaper) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16, right: 32),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0)),
+        decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -304,7 +449,21 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     );
   }
 
-  Widget _buildChatBubble(String text, WritingTheme theme, Color primary, bool isFlat, {required bool isAi, required bool canInsert, required WritingProvider provider}) {
+  Widget _buildChatBubble(
+    String text,
+    WritingTheme theme,
+    Color primary,
+    bool isPaper, {
+    required bool isAi,
+    required bool canInsert,
+    required bool canReplace,
+    int? replaceStart,
+    int? replaceEnd,
+    String? originalText,
+    required bool isReplaced,
+    required int messageIndex,
+    required WritingProvider provider,
+  }) {
     return Align(
       alignment: isAi ? Alignment.centerLeft : Alignment.centerRight,
       child: Container(
@@ -312,8 +471,8 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isAi ? theme.textColor.withValues(alpha: 0.05) : primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(isFlat ? 4.0 : 12.0), topRight: Radius.circular(isFlat ? 4.0 : 12.0), bottomLeft: Radius.circular(isFlat ? 4.0 : (isAi ? 2.0 : 12.0)), bottomRight: Radius.circular(isFlat ? 4.0 : (isAi ? 12.0 : 2.0))),
-          border: isFlat ? Border.all(color: isAi ? theme.textColor.withValues(alpha: 0.1) : primary.withValues(alpha: 0.2)) : null,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(isPaper ? 4.0 : 12.0), topRight: Radius.circular(isPaper ? 4.0 : 12.0), bottomLeft: Radius.circular(isPaper ? 4.0 : (isAi ? 2.0 : 12.0)), bottomRight: Radius.circular(isPaper ? 4.0 : (isAi ? 12.0 : 2.0))),
+          border: isPaper ? Border.all(color: isAi ? theme.textColor.withValues(alpha: 0.1) : primary.withValues(alpha: 0.2)) : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,6 +500,50 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
                   ),
                 ),
               )
+            ],
+            if (isAi && canReplace && replaceStart != null && replaceEnd != null) ...[
+              const SizedBox(height: 12),
+              Divider(height: 1, color: theme.textColor.withValues(alpha: 0.1)),
+              const SizedBox(height: 8),
+              if (!isReplaced)
+                InkWell(
+                  onTap: () => _replaceSelection(text, replaceStart, replaceEnd, messageIndex),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.arrow_right_arrow_left, size: 14, color: primary),
+                        const SizedBox(width: 4),
+                        Text('替换原文', style: TextStyle(fontSize: 12, color: primary, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('已替换', style: TextStyle(fontSize: 12, color: theme.textColor.withValues(alpha: 0.4))),
+                    const SizedBox(width: 12),
+                    InkWell(
+                      onTap: _undoReplace,
+                      borderRadius: BorderRadius.circular(4),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(CupertinoIcons.restart, size: 14, color: Color(0xFFD97706)),
+                            SizedBox(width: 4),
+                            Text('撤销', style: TextStyle(fontSize: 12, color: Color(0xFFD97706), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
             ]
           ],
         ),
@@ -348,3 +551,4 @@ class _DesktopInspectorPanelState extends State<DesktopInspectorPanel> {
     );
   }
 }
+

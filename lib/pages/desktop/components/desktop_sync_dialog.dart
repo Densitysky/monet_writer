@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -7,8 +7,8 @@ import 'package:monet_writer/providers/user_provider.dart';
 import 'package:monet_writer/services/sync_server_service.dart';
 
 class DesktopSyncDialog extends StatefulWidget {
-  final bool isFlat;
-  const DesktopSyncDialog({super.key, required this.isFlat});
+  final bool isPaper;
+  const DesktopSyncDialog({super.key, required this.isPaper});
 
   @override
   State<DesktopSyncDialog> createState() => _DesktopSyncDialogState();
@@ -50,7 +50,7 @@ class _DesktopSyncDialogState extends State<DesktopSyncDialog> {
 
     return Dialog(
       backgroundColor: currentTheme.backgroundColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 8.0 : 24.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 8.0 : 24.0)),
       child: Container(
         width: 420,
         padding: const EdgeInsets.all(32),
@@ -93,7 +93,7 @@ class _DesktopSyncDialogState extends State<DesktopSyncDialog> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white, // 二维码底色必须是白色，确保手机能扫出
-                    borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 16.0),
+                    borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 16.0),
                     border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.1)),
                   ),
                   child: QrImageView(
@@ -112,7 +112,7 @@ class _DesktopSyncDialogState extends State<DesktopSyncDialog> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: primaryColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 12.0),
+                    borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 12.0),
                   ),
                   child: Column(
                     children: [

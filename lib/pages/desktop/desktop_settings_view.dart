@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -12,6 +12,7 @@ import 'package:monet_writer/pages/desktop/settings/desktop_ai_prompts_panel.dar
 import 'package:monet_writer/pages/desktop/settings/desktop_data_manage_panel.dart';
 // 【新增】：引入境界体系弹窗
 import 'package:monet_writer/pages/settings/components/title_system_dialog.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
 
 /// 桌面端：全局设置主控制台 (模块化架构)
 class DesktopSettingsView extends StatelessWidget {
@@ -22,12 +23,14 @@ class DesktopSettingsView extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+
     return Container(
-      color: currentTheme.backgroundColor,
+      color: (isPaper || isNeumorphic) ? Theme.of(context).scaffoldBackgroundColor : currentTheme.backgroundColor,
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -40,7 +43,7 @@ class DesktopSettingsView extends StatelessWidget {
               // ==================== 1. 外观与个性化 ====================
               _buildSectionTitle('外观与个性化', CupertinoIcons.paintbrush, currentTheme, primaryColor),
               _buildSettingCard(
-                isFlat: isFlat, currentTheme: currentTheme,
+                isPaper: isPaper, currentTheme: currentTheme, isNeumorphic: isNeumorphic,
                 child: Column(
                   children: [
                     // 【新增】：成就与境界体系设置入口
@@ -52,7 +55,7 @@ class DesktopSettingsView extends StatelessWidget {
                         onPressed: () {
                           showDialog(
                             context: context,
-                            builder: (_) => TitleSystemDialog(isFlat: isFlat),
+                            builder: (_) => TitleSystemDialog(isPaper: isPaper),
                           );
                         },
                         icon: const Icon(Icons.military_tech, size: 18),
@@ -80,21 +83,22 @@ class DesktopSettingsView extends StatelessWidget {
                         ],
                         selected: {themeProvider.themeMode},
                         onSelectionChanged: (set) => themeProvider.setThemeMode(set.first),
-                        style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)))),
+                        style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)))),
                       ),
                     ),
                     Divider(height: 1, color: currentTheme.textColor.withValues(alpha: 0.05)),
                     _buildSettingRow(
-                      title: 'UI 视觉风格', subtitle: '现代 · 极简 · 黄金', currentTheme: currentTheme,
+                      title: 'UI 视觉风格', subtitle: '现代 · 纸感 · 黄金 · 柔和', currentTheme: currentTheme,
                       trailing: SegmentedButton<AppThemeStyle>(
                         segments: const [
-                          ButtonSegment(value: AppThemeStyle.modern, label: Text('现代', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: AppThemeStyle.flat, label: Text('极简', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: AppThemeStyle.golden, label: Text('黄金', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: AppThemeStyle.modern, label: Text('现代', style: TextStyle(fontSize: 10))),
+                          ButtonSegment(value: AppThemeStyle.paper, label: Text('纸感', style: TextStyle(fontSize: 10))),
+                          ButtonSegment(value: AppThemeStyle.golden, label: Text('黄金', style: TextStyle(fontSize: 10))),
+                          ButtonSegment(value: AppThemeStyle.neumorphic, label: Text('新拟态', style: TextStyle(fontSize: 10))),
                         ],
                         selected: {themeProvider.themeStyle},
                         onSelectionChanged: (set) => themeProvider.setThemeStyle(set.first),
-                        style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)))),
+                        style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)))),
                       ),
                     ),
                     if (themeProvider.themeStyle == AppThemeStyle.golden)
@@ -108,7 +112,7 @@ class DesktopSettingsView extends StatelessWidget {
                           ],
                           selected: {themeProvider.colorPalette},
                           onSelectionChanged: (set) => themeProvider.setColorPalette(set.first),
-                          style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)))),
+                          style: ButtonStyle(shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)))),
                         ),
                       ),
                     Divider(height: 1, color: currentTheme.textColor.withValues(alpha: 0.05)),
@@ -118,7 +122,7 @@ class DesktopSettingsView extends StatelessWidget {
                       title: '主题颜色',
                       subtitle: '当前色值: #${themeProvider.seedColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
                       currentTheme: currentTheme,
-                      expandedContent: DesktopColorPickerPanel(isFlat: isFlat),
+                      expandedContent: DesktopColorPickerPanel(isPaper: isPaper),
                     ),
                   ],
                 ),
@@ -128,7 +132,7 @@ class DesktopSettingsView extends StatelessWidget {
               // ==================== 2. AI 与写作 ====================
               _buildSectionTitle('AI 与写作', CupertinoIcons.wand_rays, currentTheme, primaryColor),
               _buildSettingCard(
-                isFlat: isFlat, currentTheme: currentTheme,
+                isPaper: isPaper, currentTheme: currentTheme, isNeumorphic: isNeumorphic,
                 child: Column(
                   children: [
                     // 【解耦装载】AI 引擎配置
@@ -136,7 +140,7 @@ class DesktopSettingsView extends StatelessWidget {
                       title: 'AI 引擎配置',
                       subtitle: '展开以配置接口地址、模型名称与 API Key',
                       currentTheme: currentTheme,
-                      expandedContent: DesktopAiConfigPanel(isFlat: isFlat, currentTheme: currentTheme),
+                      expandedContent: DesktopAiConfigPanel(isPaper: isPaper, currentTheme: currentTheme),
                     ),
                     Divider(height: 1, color: currentTheme.textColor.withValues(alpha: 0.05)),
 
@@ -145,7 +149,7 @@ class DesktopSettingsView extends StatelessWidget {
                       title: 'AI 提示词管理',
                       subtitle: '自定义扩写、润色等指令模板',
                       currentTheme: currentTheme,
-                      expandedContent: DesktopAiPromptsPanel(isFlat: isFlat, currentTheme: currentTheme, primaryColor: primaryColor),
+                      expandedContent: DesktopAiPromptsPanel(isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor),
                     ),
                   ],
                 ),
@@ -155,7 +159,7 @@ class DesktopSettingsView extends StatelessWidget {
               // ==================== 3. 数据与安全 ====================
               _buildSectionTitle('数据与安全', CupertinoIcons.lock_shield, currentTheme, primaryColor),
               _buildSettingCard(
-                isFlat: isFlat, currentTheme: currentTheme,
+                isPaper: isPaper, currentTheme: currentTheme, isNeumorphic: isNeumorphic,
                 child: Column(
                   children: [
                     // 【解耦装载】数据备份与恢复
@@ -163,7 +167,7 @@ class DesktopSettingsView extends StatelessWidget {
                       title: '数据备份与恢复',
                       subtitle: '将你的心血安全地导出或从本地恢复',
                       currentTheme: currentTheme,
-                      expandedContent: DesktopDataManagePanel(isFlat: isFlat, currentTheme: currentTheme, primaryColor: primaryColor),
+                      expandedContent: DesktopDataManagePanel(isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor),
                     ),
                   ],
                 ),
@@ -189,11 +193,13 @@ class DesktopSettingsView extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingCard({required bool isFlat, required WritingTheme currentTheme, required Widget child}) {
+  Widget _buildSettingCard({required bool isPaper, required WritingTheme currentTheme, required Widget child, bool isNeumorphic = false}) {
+    if (isNeumorphic) return AppCard(child: child);
+
     return Container(
       decoration: BoxDecoration(
-        color: isFlat ? Colors.transparent : currentTheme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
+        color: isPaper ? Colors.transparent : currentTheme.textColor.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
         border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.05)),
       ),
       child: child,
@@ -294,3 +300,4 @@ class _ExpandableSettingRowState extends State<_ExpandableSettingRow> {
     );
   }
 }
+

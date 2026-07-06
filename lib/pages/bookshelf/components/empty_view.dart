@@ -8,16 +8,17 @@ class EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.35);
 
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.auto_stories, size: 80, color: theme.colorScheme.surfaceContainerHighest),
+          Icon(Icons.auto_stories, size: 80, color: muted),
           const SizedBox(height: 16),
           Text(
             '还没有书籍',
-            style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey),
+            style: theme.textTheme.titleMedium?.copyWith(color: muted),
           ),
           const SizedBox(height: 8),
           OutlinedButton(

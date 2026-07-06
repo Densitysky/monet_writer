@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monet_writer/providers/inspirations_provider.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
@@ -35,11 +35,12 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
     final userProvider = context.watch<UserProvider>();
     final inspirationsProvider = context.watch<InspirationsProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final themeData = Theme.of(context);
 
-    final bgColor = isFlat
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
+    final bgColor = (isPaper || isNeumorphic)
         ? themeData.scaffoldBackgroundColor
         : currentTheme.backgroundColor;
 
@@ -48,7 +49,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
     final mutedColor = textColor.withValues(alpha: 0.5);
     final hintColor = textColor.withValues(alpha: 0.25);
     final borderColor = textColor.withValues(alpha: 0.08);
-    final surfaceColor = isFlat
+    final surfaceColor = isPaper
         ? themeData.colorScheme.surfaceContainerHighest
         : textColor.withValues(alpha: 0.03);
 
@@ -64,7 +65,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
           _buildTopBar(
             context,
             inspirationsProvider,
-            isFlat,
+            isPaper,
             textColor,
             mutedColor,
             hintColor,
@@ -79,7 +80,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
                 : _buildCardGrid(
                     fragments,
                     inspirationsProvider,
-                    isFlat,
+                    isPaper,
                     textColor,
                     mutedColor,
                     hintColor,
@@ -93,7 +94,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
           // ===== 底部快捷输入栏 =====
           _buildQuickInputBar(
             inspirationsProvider,
-            isFlat,
+            isPaper,
             textColor,
             mutedColor,
             hintColor,
@@ -109,7 +110,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
   Widget _buildTopBar(
     BuildContext context,
     InspirationsProvider provider,
-    bool isFlat,
+    bool isPaper,
     Color textColor,
     Color mutedColor,
     Color hintColor,
@@ -177,7 +178,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
                         fontSize: 12,
                         fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                         color: isActive
-                            ? (isFlat && !isDark ? Colors.white : bgColorOf(textColor))
+                            ? (isPaper && !isDark ? Colors.white : bgColorOf(textColor))
                             : mutedColor,
                       ),
                     ),
@@ -195,7 +196,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
   Widget _buildCardGrid(
     List<InspirationItem> fragments,
     InspirationsProvider provider,
-    bool isFlat,
+    bool isPaper,
     Color textColor,
     Color mutedColor,
     Color hintColor,
@@ -219,14 +220,14 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
           itemBuilder: (context, index) {
             if (index == fragments.length) {
               return _buildAddCard(
-                isFlat, textColor, mutedColor, hintColor, borderColor, surfaceColor,
-                onTap: () => _showCreateSheet(context, provider, textColor, mutedColor, isFlat),
+                isPaper, textColor, mutedColor, hintColor, borderColor, surfaceColor,
+                onTap: () => _showCreateSheet(context, provider, textColor, mutedColor, isPaper),
               );
             }
             final fragment = fragments[index];
             return _buildFragmentCard(
               fragment,
-              isFlat,
+              isPaper,
               textColor,
               mutedColor,
               hintColor,
@@ -234,7 +235,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
               surfaceColor,
               bgColor,
               seedColor,
-              onTap: () => _showEditSheet(context, provider, fragment, textColor, mutedColor, isFlat),
+              onTap: () => _showEditSheet(context, provider, fragment, textColor, mutedColor, isPaper),
               onDelete: () => _confirmDelete(context, provider, fragment),
             );
           },
@@ -245,7 +246,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
 
   Widget _buildFragmentCard(
     InspirationItem fragment,
-    bool isFlat,
+    bool isPaper,
     Color textColor,
     Color mutedColor,
     Color hintColor,
@@ -351,7 +352,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
   }
 
   Widget _buildAddCard(
-    bool isFlat, Color textColor, Color mutedColor, Color hintColor,
+    bool isPaper, Color textColor, Color mutedColor, Color hintColor,
     Color borderColor, Color surfaceColor, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
@@ -402,7 +403,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
 
   Widget _buildQuickInputBar(
     InspirationsProvider provider,
-    bool isFlat,
+    bool isPaper,
     Color textColor,
     Color mutedColor,
     Color hintColor,
@@ -419,7 +420,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => _showCreateSheet(context, provider, textColor, mutedColor, isFlat),
+              onTap: () => _showCreateSheet(context, provider, textColor, mutedColor, isPaper),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
@@ -440,7 +441,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
           _buildPillButton('关联作品', mutedColor, borderColor),
           const SizedBox(width: 10),
           GestureDetector(
-            onTap: () => _showCreateSheet(context, provider, textColor, mutedColor, isFlat),
+            onTap: () => _showCreateSheet(context, provider, textColor, mutedColor, isPaper),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               decoration: BoxDecoration(
@@ -452,7 +453,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: isFlat && !isDark ? Colors.white : bgColorOf(textColor),
+                  color: isPaper && !isDark ? Colors.white : bgColorOf(textColor),
                 ),
               ),
             ),
@@ -511,9 +512,9 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
     InspirationsProvider provider,
     Color textColor,
     Color mutedColor,
-    bool isFlat,
+    bool isPaper,
   ) {
-    _showEditorSheet(context, provider, textColor, mutedColor, isFlat, fragment: null);
+    _showEditorSheet(context, provider, textColor, mutedColor, isPaper, fragment: null);
   }
 
   void _showEditSheet(
@@ -522,9 +523,9 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
     InspirationItem fragment,
     Color textColor,
     Color mutedColor,
-    bool isFlat,
+    bool isPaper,
   ) {
-    _showEditorSheet(context, provider, textColor, mutedColor, isFlat, fragment: fragment);
+    _showEditorSheet(context, provider, textColor, mutedColor, isPaper, fragment: fragment);
   }
 
   void _showEditorSheet(
@@ -532,7 +533,7 @@ class _DesktopInspirationsViewState extends State<DesktopInspirationsView> {
     InspirationsProvider provider,
     Color textColor,
     Color mutedColor,
-    bool isFlat, {
+    bool isPaper, {
     InspirationItem? fragment,
   }) {
     final isEditing = fragment != null;
@@ -905,3 +906,4 @@ class _DashedBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

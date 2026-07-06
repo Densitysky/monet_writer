@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -9,13 +9,13 @@ import 'package:monet_writer/pages/writing/components/word_goal_widget.dart';
 
 class InspectorFormatTab extends StatelessWidget {
   final WritingTheme currentTheme;
-  final bool isFlat;
+  final bool isPaper;
   final Color primaryColor;
 
   const InspectorFormatTab({
     super.key,
     required this.currentTheme,
-    required this.isFlat,
+    required this.isPaper,
     required this.primaryColor,
   });
 
@@ -50,7 +50,7 @@ class InspectorFormatTab extends StatelessWidget {
                         color: item.backgroundColor,
                         shape: BoxShape.circle,
                         border: Border.all(color: isSelected ? primaryColor : currentTheme.textColor.withValues(alpha: 0.1), width: isSelected ? 2 : 1),
-                        boxShadow: isSelected && !isFlat ? [BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 6)] : [],
+                        boxShadow: isSelected && !isPaper ? [BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 6)] : [],
                       ),
                       child: isSelected ? Icon(Icons.check, color: item.textColor, size: 16) : null,
                     ),
@@ -170,6 +170,61 @@ class InspectorFormatTab extends StatelessWidget {
         ),
         const SizedBox(height: 24),
 
+        // ================= 3. 沉浸排版风格（桌面端专属） =================
+        _buildSectionTitle('沉浸排版风格'),
+        const SizedBox(height: 12),
+        _buildContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('选择 F11 全屏沉浸时的视觉风格', style: TextStyle(fontSize: 11, color: currentTheme.textColor.withValues(alpha: 0.4))),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _ImmersiveStyleChip(
+                    label: '纸页画布',
+                    isSelected: userProvider.desktopImmersiveStyle == 0,
+                    onTap: () => userProvider.setDesktopImmersiveStyle(0),
+                    primaryColor: primaryColor,
+                    currentTheme: currentTheme,
+                  ),
+                  _ImmersiveStyleChip(
+                    label: '聚焦光束',
+                    isSelected: userProvider.desktopImmersiveStyle == 1,
+                    onTap: () => userProvider.setDesktopImmersiveStyle(1),
+                    primaryColor: primaryColor,
+                    currentTheme: currentTheme,
+                  ),
+                  _ImmersiveStyleChip(
+                    label: '氛围光晕',
+                    isSelected: userProvider.desktopImmersiveStyle == 2,
+                    onTap: () => userProvider.setDesktopImmersiveStyle(2),
+                    primaryColor: primaryColor,
+                    currentTheme: currentTheme,
+                  ),
+                  _ImmersiveStyleChip(
+                    label: '打字机',
+                    isSelected: userProvider.desktopImmersiveStyle == 3,
+                    onTap: () => userProvider.setDesktopImmersiveStyle(3),
+                    primaryColor: primaryColor,
+                    currentTheme: currentTheme,
+                  ),
+                  _ImmersiveStyleChip(
+                    label: '工作室',
+                    isSelected: userProvider.desktopImmersiveStyle == 4,
+                    onTap: () => userProvider.setDesktopImmersiveStyle(4),
+                    primaryColor: primaryColor,
+                    currentTheme: currentTheme,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
         // ================= 3. 辅助工具 =================
         _buildSectionTitle('写作辅助'),
         const SizedBox(height: 12),
@@ -233,7 +288,7 @@ class InspectorFormatTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: currentTheme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
         border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.05)),
       ),
       child: child,
@@ -251,6 +306,41 @@ class InspectorFormatTab extends StatelessWidget {
       default:
         return '当前：$family';
     }
+  }
+}
+
+class _ImmersiveStyleChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color primaryColor;
+  final WritingTheme currentTheme;
+
+  const _ImmersiveStyleChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.primaryColor,
+    required this.currentTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label, style: const TextStyle(fontSize: 11)),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      selectedColor: primaryColor.withValues(alpha: 0.15),
+      backgroundColor: currentTheme.textColor.withValues(alpha: 0.05),
+      labelStyle: TextStyle(
+        color: isSelected ? primaryColor : currentTheme.textColor.withValues(alpha: 0.6),
+      ),
+      side: BorderSide(
+        color: isSelected ? primaryColor : currentTheme.textColor.withValues(alpha: 0.1),
+      ),
+      visualDensity: VisualDensity.compact,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+    );
   }
 }
 

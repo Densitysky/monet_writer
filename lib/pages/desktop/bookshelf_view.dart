@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:isar/isar.dart';
@@ -45,7 +45,7 @@ class _BookshelfViewState extends State<BookshelfView> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -83,7 +83,7 @@ class _BookshelfViewState extends State<BookshelfView> {
                       // 注入灵魂：带呼吸焦点环的绝美搜索框
                       _FocusableSearchBar(
                         currentTheme: currentTheme,
-                        isFlat: isFlat,
+                        isPaper: isPaper,
                         primaryColor: primaryColor,
                       ),
                       const SizedBox(width: 16),
@@ -97,7 +97,7 @@ class _BookshelfViewState extends State<BookshelfView> {
                           label: const Text('新建书籍', style: TextStyle(fontWeight: FontWeight.bold)),
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 20.0)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
                           ),
                         ),
                       ),
@@ -110,7 +110,7 @@ class _BookshelfViewState extends State<BookshelfView> {
             // ==================== 2. 书籍网格展示区 ====================
             Expanded(
               child: books.isEmpty
-                  ? _buildEmptyView(currentTheme, isFlat, primaryColor)
+                  ? _buildEmptyView(currentTheme, isPaper, primaryColor)
                   : GridView.builder(
                 padding: const EdgeInsets.fromLTRB(40, 10, 40, 40),
                 // 【核心重构】：完美适配竖向画廊风的全新网格比例
@@ -133,7 +133,7 @@ class _BookshelfViewState extends State<BookshelfView> {
   }
 
   // 绝美桌面级空状态
-  Widget _buildEmptyView(WritingTheme theme, bool isFlat, Color primary) {
+  Widget _buildEmptyView(WritingTheme theme, bool isPaper, Color primary) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -157,7 +157,7 @@ class _BookshelfViewState extends State<BookshelfView> {
             label: const Text('创建第一本书', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 100.0)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 100.0)),
             ),
           ),
         ],
@@ -171,12 +171,12 @@ class _BookshelfViewState extends State<BookshelfView> {
 /// ==========================================
 class _FocusableSearchBar extends StatefulWidget {
   final WritingTheme currentTheme;
-  final bool isFlat;
+  final bool isPaper;
   final Color primaryColor;
 
   const _FocusableSearchBar({
     required this.currentTheme,
-    required this.isFlat,
+    required this.isPaper,
     required this.primaryColor,
   });
 
@@ -215,12 +215,12 @@ class _FocusableSearchBarState extends State<_FocusableSearchBar> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: widget.currentTheme.textColor.withValues(alpha: _isFocused ? 0.02 : 0.05),
-        borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 20.0),
+        borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 20.0),
         border: Border.all(
           // 聚焦时边框染上主题色
           color: _isFocused
               ? widget.primaryColor.withValues(alpha: 0.4)
-              : (widget.isFlat ? widget.currentTheme.textColor.withValues(alpha: 0.1) : Colors.transparent),
+              : (widget.isPaper ? widget.currentTheme.textColor.withValues(alpha: 0.1) : Colors.transparent),
           width: 1.0,
         ),
         boxShadow: _isFocused

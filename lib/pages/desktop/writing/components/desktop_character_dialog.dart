@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -162,7 +162,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
     final userProvider = context.watch<UserProvider>();
     final provider = context.watch<WritingProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final baseColor = _extractedColor ?? Theme.of(context).colorScheme.primary;
     final isAnalyzing = provider.isAnalyzing(_nameCtrl.text);
@@ -170,8 +170,8 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
     return Dialog(
       backgroundColor: currentTheme.backgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
-        side: isFlat ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
+        side: isPaper ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
@@ -183,8 +183,8 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
             Container(
               width: 280,
               decoration: BoxDecoration(
-                color: isFlat ? currentTheme.textColor.withValues(alpha: 0.02) : baseColor.withValues(alpha: 0.1),
-                border: isFlat ? Border(right: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1))) : null,
+                color: isPaper ? currentTheme.textColor.withValues(alpha: 0.02) : baseColor.withValues(alpha: 0.1),
+                border: isPaper ? Border(right: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1))) : null,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -198,8 +198,8 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: baseColor.withValues(alpha: 0.2),
-                          border: isFlat ? Border.all(color: baseColor, width: 2) : Border.all(color: Colors.white, width: 4),
-                          boxShadow: isFlat ? null : [BoxShadow(color: baseColor.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
+                          border: isPaper ? Border.all(color: baseColor, width: 2) : Border.all(color: Colors.white, width: 4),
+                          boxShadow: isPaper ? null : [BoxShadow(color: baseColor.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
                           image: (_avatarPath != null && File(_avatarPath!).existsSync())
                               ? DecorationImage(image: FileImage(File(_avatarPath!)), fit: BoxFit.cover)
                               : null,
@@ -232,7 +232,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
                         backgroundColor: baseColor.withValues(alpha: 0.15),
                         foregroundColor: baseColor,
                         minimumSize: const Size(double.infinity, 44),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)),
                       ),
                     ),
                   ),
@@ -273,8 +273,8 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildBasicTab(currentTheme, isFlat),
-                        _buildEventTab(currentTheme, isFlat, baseColor),
+                        _buildBasicTab(currentTheme, isPaper),
+                        _buildEventTab(currentTheme, isPaper, baseColor),
                       ],
                     ),
                   ),
@@ -291,7 +291,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
                           onPressed: _saveAndClose,
                           style: FilledButton.styleFrom(
                             backgroundColor: baseColor,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)),
                           ),
                           child: const Text('保存修改', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
@@ -307,13 +307,13 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
     );
   }
 
-  Widget _buildBasicTab(WritingTheme currentTheme, bool isFlat) {
+  Widget _buildBasicTab(WritingTheme currentTheme, bool isPaper) {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        _buildDesktopInput(label: '一句话简介 (定位)', controller: _descCtrl, currentTheme: currentTheme, isFlat: isFlat, hint: '例如：深藏不露的扫地僧...'),
+        _buildDesktopInput(label: '一句话简介 (定位)', controller: _descCtrl, currentTheme: currentTheme, isPaper: isPaper, hint: '例如：深藏不露的扫地僧...'),
         const SizedBox(height: 24),
-        _buildDesktopInput(label: '生平总括 / 核心性格', controller: _bioCtrl, currentTheme: currentTheme, isFlat: isFlat, maxLines: 6, hint: '在此书写角色的出身、核心动机等...'),
+        _buildDesktopInput(label: '生平总括 / 核心性格', controller: _bioCtrl, currentTheme: currentTheme, isPaper: isPaper, maxLines: 6, hint: '在此书写角色的出身、核心动机等...'),
         const SizedBox(height: 24),
 
         Text('角色标签', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: currentTheme.textColor.withValues(alpha: 0.7))),
@@ -331,7 +331,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
                     hintStyle: TextStyle(color: currentTheme.textColor.withValues(alpha: 0.3)),
                     filled: true, fillColor: currentTheme.textColor.withValues(alpha: 0.05),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), borderSide: BorderSide.none),
                   ),
                   onSubmitted: (val) {
                     if (val.trim().isNotEmpty) {
@@ -351,7 +351,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
             backgroundColor: currentTheme.textColor.withValues(alpha: 0.05),
             deleteIconColor: currentTheme.textColor.withValues(alpha: 0.5),
             side: BorderSide.none,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)),
             onDeleted: () => setState(() => _tags.remove(tag)),
           )).toList(),
         ),
@@ -359,7 +359,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
     );
   }
 
-  Widget _buildEventTab(WritingTheme currentTheme, bool isFlat, Color baseColor) {
+  Widget _buildEventTab(WritingTheme currentTheme, bool isPaper, Color baseColor) {
     final events = widget.character?.lifeEvents ?? [];
     return Column(
       children: [
@@ -376,8 +376,8 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: currentTheme.textColor.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0),
-                  border: isFlat ? Border.all(color: currentTheme.textColor.withValues(alpha: 0.08)) : null,
+                  borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0),
+                  border: isPaper ? Border.all(color: currentTheme.textColor.withValues(alpha: 0.08)) : null,
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,7 +408,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
     );
   }
 
-  Widget _buildDesktopInput({required String label, required TextEditingController controller, required WritingTheme currentTheme, required bool isFlat, int maxLines = 1, String hint = ''}) {
+  Widget _buildDesktopInput({required String label, required TextEditingController controller, required WritingTheme currentTheme, required bool isPaper, int maxLines = 1, String hint = ''}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -424,7 +424,7 @@ class _DesktopCharacterDialogState extends State<DesktopCharacterDialog> with Si
             filled: true,
             fillColor: currentTheme.textColor.withValues(alpha: 0.05),
             contentPadding: const EdgeInsets.all(16),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), borderSide: BorderSide.none),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), borderSide: BorderSide.none),
           ),
         ),
       ],

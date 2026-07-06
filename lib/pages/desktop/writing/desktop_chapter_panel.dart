@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:isar/isar.dart';
@@ -13,15 +13,15 @@ class DesktopChapterPanel extends StatelessWidget {
   const DesktopChapterPanel({super.key});
 
   // --- 新建章节弹窗 ---
-  void _showCreateChapterDialog(BuildContext context, WritingProvider provider, bool isFlat, WritingTheme theme) {
+  void _showCreateChapterDialog(BuildContext context, WritingProvider provider, bool isPaper, WritingTheme theme) {
     final TextEditingController controller = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: theme.backgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
-          side: isFlat ? BorderSide(color: theme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
+          borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
+          side: isPaper ? BorderSide(color: theme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
         ),
         title: Text('新建章节', style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold)),
         content: TextField(
@@ -33,7 +33,7 @@ class DesktopChapterPanel extends StatelessWidget {
             hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
             filled: true,
             fillColor: theme.textColor.withValues(alpha: 0.05),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), borderSide: BorderSide.none),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), borderSide: BorderSide.none),
           ),
           onSubmitted: (_) {
             if (controller.text.trim().isNotEmpty) {
@@ -45,7 +45,7 @@ class DesktopChapterPanel extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消', style: TextStyle(color: Colors.grey))),
           FilledButton(
-            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0))),
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0))),
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
                 provider.createChapter(controller.text.trim());
@@ -60,15 +60,15 @@ class DesktopChapterPanel extends StatelessWidget {
   }
 
   // --- 【新增核心】章节右键悬浮菜单 ---
-  void _showChapterContextMenu(BuildContext context, Offset position, Chapter chapter, WritingProvider provider, bool isFlat, WritingTheme theme) async {
+  void _showChapterContextMenu(BuildContext context, Offset position, Chapter chapter, WritingProvider provider, bool isPaper, WritingTheme theme) async {
     final result = await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx + 1, position.dy + 1),
       color: theme.backgroundColor,
-      elevation: isFlat ? 2 : 8,
+      elevation: isPaper ? 2 : 8,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0),
-        side: isFlat ? BorderSide(color: theme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0),
+        side: isPaper ? BorderSide(color: theme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
       ),
       items: [
         PopupMenuItem(
@@ -91,7 +91,7 @@ class DesktopChapterPanel extends StatelessWidget {
       // 先选中该章，再利用底层的 titleController 重新保存
       await provider.selectChapter(chapter);
       if (!context.mounted) return;
-      _showRenameChapterDialog(context, provider, isFlat, theme);
+      _showRenameChapterDialog(context, provider, isPaper, theme);
     } else if (result == 'export') {
       await provider.selectChapter(chapter);
       await provider.exportCurrentChapterTxt();
@@ -103,19 +103,19 @@ class DesktopChapterPanel extends StatelessWidget {
   }
 
   // --- 重命名弹窗 ---
-  void _showRenameChapterDialog(BuildContext context, WritingProvider provider, bool isFlat, WritingTheme theme) {
+  void _showRenameChapterDialog(BuildContext context, WritingProvider provider, bool isPaper, WritingTheme theme) {
     final TextEditingController controller = TextEditingController(text: provider.currentChapter?.title ?? '');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: theme.backgroundColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0), side: isFlat ? BorderSide(color: theme.textColor.withValues(alpha: 0.1)) : BorderSide.none),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0), side: isPaper ? BorderSide(color: theme.textColor.withValues(alpha: 0.1)) : BorderSide.none),
         title: Text('重命名章节', style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           autofocus: true,
           style: TextStyle(color: theme.textColor),
-          decoration: InputDecoration(filled: true, fillColor: theme.textColor.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), borderSide: BorderSide.none)),
+          decoration: InputDecoration(filled: true, fillColor: theme.textColor.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), borderSide: BorderSide.none)),
           onSubmitted: (_) {
             provider.titleController.text = controller.text.trim();
             provider.saveCurrentChapter();
@@ -143,7 +143,7 @@ class DesktopChapterPanel extends StatelessWidget {
     final userProvider = context.watch<UserProvider>();
     final provider = context.watch<WritingProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -180,11 +180,11 @@ class DesktopChapterPanel extends StatelessWidget {
                   return _DesktopChapterTile(
                     chapter: chapter,
                     isSelected: isSelected,
-                    isFlat: isFlat,
+                    isPaper: isPaper,
                     currentTheme: currentTheme,
                     primaryColor: primaryColor,
                     onTap: () => provider.selectChapter(chapter),
-                    onSecondaryTapDown: (details) => _showChapterContextMenu(context, details.globalPosition, chapter, provider, isFlat, currentTheme),
+                    onSecondaryTapDown: (details) => _showChapterContextMenu(context, details.globalPosition, chapter, provider, isPaper, currentTheme),
                   );
                 },
               );
@@ -196,9 +196,9 @@ class DesktopChapterPanel extends StatelessWidget {
           child: SizedBox(
             width: double.infinity,
             child: FilledButton.tonalIcon(
-              onPressed: () => _showCreateChapterDialog(context, provider, isFlat, currentTheme),
+              onPressed: () => _showCreateChapterDialog(context, provider, isPaper, currentTheme),
               icon: const Icon(CupertinoIcons.add, size: 16), label: const Text('新建章节', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: isFlat ? currentTheme.textColor.withValues(alpha: 0.05) : primaryColor.withValues(alpha: 0.1), foregroundColor: isFlat ? currentTheme.textColor.withValues(alpha: 0.8) : primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0))),
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: isPaper ? currentTheme.textColor.withValues(alpha: 0.05) : primaryColor.withValues(alpha: 0.1), foregroundColor: isPaper ? currentTheme.textColor.withValues(alpha: 0.8) : primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0))),
             ),
           ),
         ),
@@ -210,14 +210,14 @@ class DesktopChapterPanel extends StatelessWidget {
 class _DesktopChapterTile extends StatefulWidget {
   final Chapter chapter;
   final bool isSelected;
-  final bool isFlat;
+  final bool isPaper;
   final WritingTheme currentTheme;
   final Color primaryColor;
   final VoidCallback onTap;
   final void Function(TapDownDetails) onSecondaryTapDown;
 
   const _DesktopChapterTile({
-    required this.chapter, required this.isSelected, required this.isFlat, required this.currentTheme, required this.primaryColor, required this.onTap, required this.onSecondaryTapDown,
+    required this.chapter, required this.isSelected, required this.isPaper, required this.currentTheme, required this.primaryColor, required this.onTap, required this.onSecondaryTapDown,
   });
 
   @override
@@ -235,11 +235,11 @@ class _DesktopChapterTileState extends State<_DesktopChapterTile> {
 
     Color backgroundColor = Colors.transparent;
     if (widget.isSelected) {
-      backgroundColor = activeColor.withValues(alpha: widget.isFlat ? 0.08 : 0.12);
+      backgroundColor = activeColor.withValues(alpha: widget.isPaper ? 0.08 : 0.12);
     } else if (_isHovered) backgroundColor = widget.currentTheme.textColor.withValues(alpha: 0.04);
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: widget.isFlat ? 8.0 : 12.0, vertical: 2.0),
+      padding: EdgeInsets.symmetric(horizontal: widget.isPaper ? 8.0 : 12.0, vertical: 2.0),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _isHovered = true), onExit: (_) => setState(() => _isHovered = false),
@@ -249,10 +249,10 @@ class _DesktopChapterTileState extends State<_DesktopChapterTile> {
           behavior: HitTestBehavior.opaque,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200), curve: Curves.easeInOut, height: 40,
-            decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0)),
+            decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0)),
             child: Row(
               children: [
-                if (widget.isFlat) AnimatedContainer(duration: const Duration(milliseconds: 200), width: 3, height: widget.isSelected ? 20 : 0, margin: const EdgeInsets.only(right: 8), decoration: BoxDecoration(color: activeColor, borderRadius: const BorderRadius.horizontal(right: Radius.circular(3)))) else const SizedBox(width: 12),
+                if (widget.isPaper) AnimatedContainer(duration: const Duration(milliseconds: 200), width: 3, height: widget.isSelected ? 20 : 0, margin: const EdgeInsets.only(right: 8), decoration: BoxDecoration(color: activeColor, borderRadius: const BorderRadius.horizontal(right: Radius.circular(3)))) else const SizedBox(width: 12),
                 Icon(widget.isSelected ? CupertinoIcons.doc_text_fill : CupertinoIcons.doc_text, size: 16, color: widget.isSelected ? activeColor : widget.currentTheme.textColor.withValues(alpha: 0.4)),
                 const SizedBox(width: 8),
                 Expanded(child: Text(widget.chapter.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.normal, color: textColor))),

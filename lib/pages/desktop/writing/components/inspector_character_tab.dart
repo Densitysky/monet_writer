@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -14,13 +14,13 @@ import 'package:monet_writer/pages/desktop/writing/components/desktop_ai_task_ma
 
 class InspectorCharacterTab extends StatefulWidget {
   final WritingTheme currentTheme;
-  final bool isFlat;
+  final bool isPaper;
   final Color primaryColor;
 
   const InspectorCharacterTab({
     super.key,
     required this.currentTheme,
-    required this.isFlat,
+    required this.isPaper,
     required this.primaryColor,
   });
 
@@ -111,7 +111,7 @@ class _InspectorCharacterTabState extends State<InspectorCharacterTab> {
                             : const Icon(CupertinoIcons.wand_rays, size: 14),
                         label: Text(isExtracting ? '提取中...' : 'AI 提取角色', style: const TextStyle(fontSize: 12)),
                         style: FilledButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0)),
                         ),
                       );
                     }
@@ -132,7 +132,7 @@ class _InspectorCharacterTabState extends State<InspectorCharacterTab> {
                 },
                 icon: const Icon(CupertinoIcons.add, size: 16),
                 tooltip: '手动新建角色',
-                style: IconButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0))),
+                style: IconButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0))),
               ),
             ],
           ),
@@ -153,7 +153,7 @@ class _InspectorCharacterTabState extends State<InspectorCharacterTab> {
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
             color: isHovering ? widget.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0),
+            borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0),
             border: isHovering ? Border.all(color: widget.primaryColor) : null,
           ),
           child: Theme(
@@ -181,8 +181,8 @@ class _InspectorCharacterTabState extends State<InspectorCharacterTab> {
     final childWidget = Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: widget.isFlat ? Colors.transparent : widget.currentTheme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0),
+        color: widget.isPaper ? Colors.transparent : widget.currentTheme.textColor.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0),
         border: Border.all(color: widget.currentTheme.textColor.withValues(alpha: 0.05)),
       ),
       child: ListTile(

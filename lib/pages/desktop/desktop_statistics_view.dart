@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,6 +13,7 @@ import 'package:monet_writer/models/book/daily_stats.dart';
 
 // 请确认这里的路径与你新建组件的实际路径一致！
 import 'package:monet_writer/pages/desktop/components/desktop_crop_dialog.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
 
 /// 桌面端：全局码字统计面板 (满血终极版：包含等级与日历大盘)
 class DesktopStatisticsView extends StatefulWidget {
@@ -148,16 +149,19 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     if (_isLoading) {
-      return Container(color: currentTheme.backgroundColor, child: Center(child: CircularProgressIndicator(color: primaryColor)));
+      return Container(color: (isPaper || isNeumorphic) ? Theme.of(context).scaffoldBackgroundColor : currentTheme.backgroundColor, child: Center(child: CircularProgressIndicator(color: primaryColor)));
     }
 
+    final bgColor = (isPaper || isNeumorphic) ? Theme.of(context).scaffoldBackgroundColor : currentTheme.backgroundColor;
+
     return Container(
-      color: currentTheme.backgroundColor,
+      color: bgColor,
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1000),
@@ -176,13 +180,13 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
                 height: 116,
                 child: Row(
                   children: [
-                    Expanded(child: _buildStatCard('累计创作字数', userProvider.totalWords.toString(), CupertinoIcons.text_quote, currentTheme, primaryColor, isFlat)),
+                    Expanded(child: _buildStatCard('累计创作字数', userProvider.totalWords.toString(), CupertinoIcons.text_quote, currentTheme, primaryColor, isPaper)),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildStatCard('今日码字', userProvider.todayWords.toString(), CupertinoIcons.flame_fill, currentTheme, Colors.orangeAccent, isFlat)),
+                    Expanded(child: _buildStatCard('今日码字', userProvider.todayWords.toString(), CupertinoIcons.flame_fill, currentTheme, primaryColor.withValues(alpha: 0.80), isPaper)),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildStatCard('总计作品', _totalBooks.toString(), CupertinoIcons.book_fill, currentTheme, Colors.blueAccent, isFlat)),
+                    Expanded(child: _buildStatCard('总计作品', _totalBooks.toString(), CupertinoIcons.book_fill, currentTheme, primaryColor.withValues(alpha: 0.65), isPaper)),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildStatCard('累计打卡天数', userProvider.consecutiveDays.toString(), CupertinoIcons.calendar_today, currentTheme, Colors.greenAccent, isFlat)),
+                    Expanded(child: _buildStatCard('累计打卡天数', userProvider.consecutiveDays.toString(), CupertinoIcons.calendar_today, currentTheme, primaryColor.withValues(alpha: 0.90), isPaper)),
                   ],
                 ),
               ),
@@ -195,11 +199,11 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
                 height: 300,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: isFlat ? Colors.transparent : currentTheme.textColor.withValues(alpha: 0.02),
-                  borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
+                  color: isPaper ? Colors.transparent : currentTheme.textColor.withValues(alpha: 0.02),
+                  borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
                   border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.05)),
                 ),
-                child: _buildBarChart(currentTheme, primaryColor, isFlat),
+                child: _buildBarChart(currentTheme, primaryColor, isPaper),
               ),
               const SizedBox(height: 40),
 
@@ -220,13 +224,13 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
                   // 左侧：日历热力图
                   Expanded(
                     flex: 5,
-                    child: _buildDesktopCalendar(currentTheme, primaryColor, isFlat),
+                    child: _buildDesktopCalendar(currentTheme, primaryColor, isPaper),
                   ),
                   const SizedBox(width: 24),
                   // 右侧：单日详情日志
                   Expanded(
                     flex: 4,
-                    child: _buildDesktopDayDetail(currentTheme, primaryColor, isFlat),
+                    child: _buildDesktopDayDetail(currentTheme, primaryColor, isPaper),
                   ),
                 ],
               ),
@@ -239,38 +243,44 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
   }
 
   // --- 统计小卡片 ---
-  Widget _buildStatCard(String title, String value, IconData icon, WritingTheme theme, Color color, bool isFlat) {
+  Widget _buildStatCard(String title, String value, IconData icon, WritingTheme theme, Color color, bool isPaper) {
+    final isNeumorphic = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.neumorphic;
+
+    final cardChild = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Expanded(child: Text(title, style: TextStyle(fontSize: 13, color: theme.textColor.withValues(alpha: 0.6)), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          ],
+        ),
+        const Spacer(),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.textColor)),
+        ),
+      ],
+    );
+
+    if (isNeumorphic) return AppCard(child: cardChild);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isFlat ? Colors.transparent : theme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
+        color: isPaper ? Colors.transparent : theme.textColor.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
         border: Border.all(color: theme.textColor.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 8),
-              Expanded(child: Text(title, style: TextStyle(fontSize: 13, color: theme.textColor.withValues(alpha: 0.6)), maxLines: 1, overflow: TextOverflow.ellipsis)),
-            ],
-          ),
-          const Spacer(),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.textColor)),
-          ),
-        ],
-      ),
+      child: cardChild,
     );
   }
 
   // --- 柱状图 ---
-  Widget _buildBarChart(WritingTheme theme, Color primary, bool isFlat) {
+  Widget _buildBarChart(WritingTheme theme, Color primary, bool isPaper) {
     final maxVal = _weeklyData.reduce((a, b) => a > b ? a : b);
     final topLimit = maxVal == 0 ? 1000 : maxVal * 1.2;
 
@@ -280,13 +290,13 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
       children: List.generate(_weeklyData.length, (index) {
         final val = _weeklyData[index];
         final ratio = val / topLimit;
-        return _AnimatedBar(value: val, ratio: ratio, label: _weekDays[index], theme: theme, primary: primary, isFlat: isFlat);
+        return _AnimatedBar(value: val, ratio: ratio, label: _weekDays[index], theme: theme, primary: primary, isPaper: isPaper);
       }),
     );
   }
 
   // ================= 桌面端专属：日历网格 =================
-  Widget _buildDesktopCalendar(WritingTheme theme, Color primary, bool isFlat) {
+  Widget _buildDesktopCalendar(WritingTheme theme, Color primary, bool isPaper) {
     final monthFormat = DateFormat('yyyy年 M月');
     final daysInMonth = DateUtils.getDaysInMonth(_focusedMonth.year, _focusedMonth.month);
     final firstDayWeekday = DateTime(_focusedMonth.year, _focusedMonth.month, 1).weekday;
@@ -296,7 +306,7 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
         border: Border.all(color: theme.textColor.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -352,7 +362,7 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
                       color: bgColor,
-                      borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0),
+                      borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0),
                       border: isSelected ? Border.all(color: theme.textColor, width: 2) : Border.all(color: theme.textColor.withValues(alpha: 0.05)),
                     ),
                     alignment: Alignment.center,
@@ -375,7 +385,7 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
   }
 
   // ================= 桌面端专属：单日详情 =================
-  Widget _buildDesktopDayDetail(WritingTheme theme, Color primary, bool isFlat) {
+  Widget _buildDesktopDayDetail(WritingTheme theme, Color primary, bool isPaper) {
     final dateStr = DateFormat('yyyy / MM / dd  EEEE', 'zh_CN').format(_selectedDate);
     final count = _selectedStats?.wordCount ?? 0;
     final logs = _selectedStats?.logs ?? [];
@@ -385,7 +395,7 @@ class _DesktopStatisticsViewState extends State<DesktopStatisticsView> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.textColor.withValues(alpha: 0.01),
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
         border: Border.all(color: theme.textColor.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -468,9 +478,9 @@ class _AnimatedBar extends StatefulWidget {
   final String label;
   final WritingTheme theme;
   final Color primary;
-  final bool isFlat;
+  final bool isPaper;
 
-  const _AnimatedBar({required this.value, required this.ratio, required this.label, required this.theme, required this.primary, required this.isFlat});
+  const _AnimatedBar({required this.value, required this.ratio, required this.label, required this.theme, required this.primary, required this.isPaper});
 
   @override
   State<_AnimatedBar> createState() => _AnimatedBarState();
@@ -504,17 +514,17 @@ class _AnimatedBarState extends State<_AnimatedBar> {
                 return Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
-                    if (!widget.isFlat)
+                    if (!widget.isPaper)
                       Container(width: 40, height: constraints.maxHeight, decoration: BoxDecoration(color: widget.theme.textColor.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(6))),
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 800),
                       curve: Curves.easeOutCubic,
-                      width: widget.isFlat ? 32 : 40,
+                      width: widget.isPaper ? 32 : 40,
                       height: height,
                       decoration: BoxDecoration(
                         color: _isHovered ? widget.primary : widget.primary.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(widget.isFlat ? 4.0 : 6.0), bottom: Radius.circular(widget.isFlat ? 0.0 : 6.0)),
-                        border: widget.isFlat ? Border.all(color: widget.primary, width: 1) : null,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(widget.isPaper ? 4.0 : 6.0), bottom: Radius.circular(widget.isPaper ? 0.0 : 6.0)),
+                        border: widget.isPaper ? Border.all(color: widget.primary, width: 1) : null,
                       ),
                     ),
                   ],
@@ -556,7 +566,7 @@ class _ProfileBannerHeaderState extends State<_ProfileBannerHeader> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
 
     final scaffoldBgColor = Theme.of(context).scaffoldBackgroundColor;
     final String? coverPath = userProvider.profileCoverPath;
@@ -571,9 +581,9 @@ class _ProfileBannerHeaderState extends State<_ProfileBannerHeader> {
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isFlat ? 12.0 : 24.0),
-        border: isFlat ? Border.all(color: userProvider.currentTheme.textColor.withValues(alpha: 0.08)) : null,
-        boxShadow: isFlat ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10))],
+        borderRadius: BorderRadius.circular(isPaper ? 12.0 : 24.0),
+        border: isPaper ? Border.all(color: userProvider.currentTheme.textColor.withValues(alpha: 0.08)) : null,
+        boxShadow: isPaper ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHoveringBanner = true),
@@ -696,7 +706,7 @@ class _ProfileBannerHeaderState extends State<_ProfileBannerHeader> {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(colors: [avatarDominantColor.withValues(alpha: 0.8), avatarDominantColor.withValues(alpha: 0.3)]),
-                              borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
+                              borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
                               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                             ),
                             child: Text(

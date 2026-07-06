@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -109,7 +109,7 @@ class _DesktopOutlineDialogState extends State<DesktopOutlineDialog> {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
@@ -120,8 +120,8 @@ class _DesktopOutlineDialogState extends State<DesktopOutlineDialog> {
     return Dialog(
       backgroundColor: currentTheme.backgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 16.0),
-        side: isFlat ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 16.0),
+        side: isPaper ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
       ),
       child: Container(
         width: 600,
@@ -156,7 +156,7 @@ class _DesktopOutlineDialogState extends State<DesktopOutlineDialog> {
                 filled: true, fillColor: currentTheme.textColor.withValues(alpha: 0.05),
                 hintText: widget.nodeType == OutlineNodeType.core ? '例如：一个废柴少年逆袭拯救世界的故事...' : '输入节点名称',
                 hintStyle: TextStyle(color: currentTheme.textColor.withValues(alpha: 0.3)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), borderSide: BorderSide.none),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), borderSide: BorderSide.none),
               ),
             ),
             const SizedBox(height: 24),
@@ -185,7 +185,7 @@ class _DesktopOutlineDialogState extends State<DesktopOutlineDialog> {
                   filled: true, fillColor: currentTheme.textColor.withValues(alpha: 0.05),
                   hintText: '在此记录详细设定或剧情走向...\n(支持换行与段落梳理)',
                   hintStyle: TextStyle(color: currentTheme.textColor.withValues(alpha: 0.3)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0), borderSide: BorderSide.none),
                 ),
               ),
             ),
@@ -200,7 +200,7 @@ class _DesktopOutlineDialogState extends State<DesktopOutlineDialog> {
                   onPressed: _saveAndClose,
                   icon: const Icon(CupertinoIcons.check_mark, size: 16),
                   label: const Text('保存内容', style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0))),
+                  style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0))),
                 ),
               ],
             )

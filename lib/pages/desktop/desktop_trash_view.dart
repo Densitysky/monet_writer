@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +7,7 @@ import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/providers/user_provider.dart';
+import 'package:monet_writer/widgets/theme/app_card.dart';
 
 /// 桌面端：书籍回收站面板 (100% 对标安卓端 recycle_bin_page.dart)
 class DesktopTrashView extends StatelessWidget {
@@ -17,12 +18,14 @@ class DesktopTrashView extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
 
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
+    final isNeumorphic = themeProvider.themeStyle == AppThemeStyle.neumorphic;
     final currentTheme = userProvider.currentTheme;
+    final bgColor = (isPaper || isNeumorphic) ? Theme.of(context).scaffoldBackgroundColor : currentTheme.backgroundColor;
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Container(
-      color: currentTheme.backgroundColor,
+      color: bgColor,
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -78,7 +81,7 @@ class DesktopTrashView extends StatelessWidget {
                         final book = books[index];
                         return _DesktopDeletedBookItem(
                           book: book,
-                          isFlat: isFlat,
+                          isPaper: isPaper,
                           currentTheme: currentTheme,
                           primaryColor: primaryColor,
                         );
@@ -97,13 +100,13 @@ class DesktopTrashView extends StatelessWidget {
 
 class _DesktopDeletedBookItem extends StatelessWidget {
   final Book book;
-  final bool isFlat;
+  final bool isPaper;
   final WritingTheme currentTheme;
   final Color primaryColor;
 
   const _DesktopDeletedBookItem({
     required this.book,
-    required this.isFlat,
+    required this.isPaper,
     required this.currentTheme,
     required this.primaryColor,
   });
@@ -124,8 +127,8 @@ class _DesktopDeletedBookItem extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: currentTheme.backgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
-          side: isFlat ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
+          borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
+          side: isPaper ? BorderSide(color: currentTheme.textColor.withValues(alpha: 0.1)) : BorderSide.none,
         ),
         title: Text('彻底删除', style: TextStyle(color: currentTheme.textColor, fontWeight: FontWeight.bold)),
         content: Text('此操作将永久删除《${book.title}》及其所有章节，且无法撤销！\n\n确定要继续吗？', style: const TextStyle(color: Colors.redAccent, height: 1.5)),
@@ -137,7 +140,7 @@ class _DesktopDeletedBookItem extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -157,15 +160,9 @@ class _DesktopDeletedBookItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+    final isNeumorphic = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.neumorphic;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: isFlat ? Colors.transparent : currentTheme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(isFlat ? 4.0 : 12.0),
-        border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.05)),
-      ),
-      child: Padding(
+    Widget cardContent = Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
@@ -177,7 +174,7 @@ class _DesktopDeletedBookItem extends StatelessWidget {
                 height: 64,
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(isFlat ? 2.0 : 6.0),
+                  borderRadius: BorderRadius.circular(isPaper ? 2.0 : 6.0),
                 ),
                 child: Center(
                   child: Text(
@@ -233,7 +230,7 @@ class _DesktopDeletedBookItem extends StatelessWidget {
                   style: FilledButton.styleFrom(
                       backgroundColor: Colors.green.withValues(alpha: 0.1),
                       foregroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isFlat ? 4.0 : 8.0))
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 8.0))
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -247,7 +244,22 @@ class _DesktopDeletedBookItem extends StatelessWidget {
             ),
           ],
         ),
+      );
+
+    if (isNeumorphic) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: AppCard(padding: EdgeInsets.zero, child: cardContent),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isPaper ? Colors.transparent : currentTheme.textColor.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0),
+        border: Border.all(color: currentTheme.textColor.withValues(alpha: 0.05)),
       ),
+      child: cardContent,
     );
   }
 }

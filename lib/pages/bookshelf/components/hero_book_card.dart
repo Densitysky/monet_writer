@@ -3,10 +3,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:palette_generator/palette_generator.dart';
+import 'package:provider/provider.dart';
 import 'package:monet_writer/models/book/book.dart';
 import 'package:monet_writer/pages/writing/writing_page.dart';
 import 'package:monet_writer/services/export_service.dart';
 import 'package:monet_writer/pages/bookshelf/components/book_edit_dialog.dart';
+import 'package:monet_writer/providers/theme_provider.dart';
 import 'package:monet_writer/services/database_service.dart';
 import 'package:monet_writer/widgets/monet_book_cover.dart';
 import 'package:monet_writer/utils/color_utils.dart';
@@ -60,6 +62,9 @@ class _HeroBookCardState extends State<HeroBookCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isNeumorphic = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.neumorphic;
+    final isGolden = context.watch<ThemeProvider>().themeStyle == AppThemeStyle.golden;
+    final cs = theme.colorScheme;
     final primaryColor = _themeColor ?? theme.colorScheme.primary;
     final bool hasCover = widget.book.coverPath != null && File(widget.book.coverPath!).existsSync();
     final overlayWhite = hasCover ? Colors.white : contrastTextColor(primaryColor);
@@ -71,7 +76,8 @@ class _HeroBookCardState extends State<HeroBookCard> {
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       elevation: 6,
-      shadowColor: primaryColor.withValues(alpha: 0.4),
+      // 柔和模式统一用冷灰蓝柔影；其他模式保留主题色投影
+      shadowColor: isNeumorphic ? const Color(0xFFC5CEDC) : primaryColor.withValues(alpha: 0.4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -92,7 +98,8 @@ class _HeroBookCardState extends State<HeroBookCard> {
                 File(widget.book.coverPath!),
                 fit: BoxFit.cover,
               )
-                  : Container(color: theme.colorScheme.primaryContainer),
+                  // 纯色面板：新拟态用 primary，黄金用 secondaryContainer(30%层)，其余保留原色
+                  : Container(color: isNeumorphic ? cs.primary : isGolden ? cs.secondaryContainer : cs.primaryContainer),
             ),
             if (hasCover)
               Positioned.fill(
@@ -101,18 +108,12 @@ class _HeroBookCardState extends State<HeroBookCard> {
                   child: Container(color: Colors.black.withValues(alpha: 0.2)),
                 ),
               ),
+            // 纯色覆盖层替代渐变
             Positioned.fill(
               child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      (hasCover ? Colors.black.withValues(alpha: 0.6) : primaryColor.withValues(alpha: 0.8)),
-                      (hasCover ? Colors.black.withValues(alpha: 0.8) : theme.colorScheme.surface),
-                    ],
-                  ),
-                ),
+                color: hasCover
+                    ? Colors.black.withValues(alpha: 0.5)      // 封面：半透明黑色纯色遮罩
+                    : primaryColor,                               // 无封面：纯色主题色
               ),
             ),
             Padding(

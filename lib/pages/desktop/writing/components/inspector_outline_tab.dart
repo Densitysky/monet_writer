@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -12,13 +12,13 @@ import 'package:monet_writer/pages/desktop/writing/components/desktop_ai_task_ma
 
 class InspectorOutlineTab extends StatefulWidget {
   final WritingTheme currentTheme;
-  final bool isFlat;
+  final bool isPaper;
   final Color primaryColor;
 
   const InspectorOutlineTab({
     super.key,
     required this.currentTheme,
-    required this.isFlat,
+    required this.isPaper,
     required this.primaryColor,
   });
 
@@ -149,7 +149,7 @@ class _InspectorOutlineTabState extends State<InspectorOutlineTab> {
                 label: Text(isExtracting ? 'AI 后台运行中...' : 'AI 提取本章大纲', style: const TextStyle(fontSize: 12)),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(double.infinity, 36),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0)),
                 ),
               );
             },
@@ -233,8 +233,8 @@ class _InspectorOutlineTabState extends State<InspectorOutlineTab> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: widget.isFlat ? Colors.transparent : widget.currentTheme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0),
+        color: widget.isPaper ? Colors.transparent : widget.currentTheme.textColor.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0),
         border: Border.all(color: widget.currentTheme.textColor.withValues(alpha: 0.05)),
       ),
       child: ListTile(
@@ -255,7 +255,7 @@ class _InspectorOutlineTabState extends State<InspectorOutlineTab> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: widget.currentTheme.textColor.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(widget.isFlat ? 4.0 : 8.0),
+        borderRadius: BorderRadius.circular(widget.isPaper ? 4.0 : 8.0),
         border: Border.all(color: widget.currentTheme.textColor.withValues(alpha: 0.05)),
       ),
       child: Theme(

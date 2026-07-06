@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +12,6 @@ import 'package:monet_writer/pages/desktop/writing/desktop_chapter_panel.dart';
 import 'package:monet_writer/pages/desktop/writing/desktop_editor_panel.dart';
 import 'package:monet_writer/pages/desktop/writing/desktop_inspector_panel.dart';
 import 'package:monet_writer/pages/desktop/writing/desktop_search_panel.dart';
-import 'package:monet_writer/pages/desktop/writing/components/desktop_ai_task_manager.dart';
 
 class DesktopWritingPage extends StatelessWidget {
   final Book book;
@@ -36,31 +35,51 @@ class _DesktopWritingWorkspace extends StatefulWidget {
 }
 
 class _DesktopWritingWorkspaceState extends State<_DesktopWritingWorkspace> {
-  // ================= 核心状态流转 =================
-  bool _showSearchPanel = false;
-
-  // 独立控制左右侧边栏的开关 (默认展开)
   bool _showLeftPanel = true;
   bool _showRightPanel = true;
+  final int _inspectorTabIndex = 0;
+  bool _showSearchPanel = false;
+  late final ValueNotifier<int> _inspectorTabController;
+  late final ValueNotifier<String?> _aiSelectedText;
+
+  static const double _leftPanelWidth = 260.0;
+  static const double _rightPanelWidth = 300.0;
+  static const double _cardMargin = 12.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _inspectorTabController = ValueNotifier<int>(_inspectorTabIndex);
+    _aiSelectedText = ValueNotifier<String?>(null);
+  }
+
+  @override
+  void dispose() {
+    _inspectorTabController.dispose();
+    _aiSelectedText.dispose();
+    super.dispose();
+  }
+
+  void _onAiTap(String selectedText) {
+    setState(() {
+      _showRightPanel = true;
+      _inspectorTabController.value = 3;
+      _aiSelectedText.value = selectedText;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
     final provider = context.watch<WritingProvider>();
-
-    final isFlat = themeProvider.themeStyle == AppThemeStyle.flat;
+    final isPaper = themeProvider.themeStyle == AppThemeStyle.paper;
     final currentTheme = userProvider.currentTheme;
-
-    // 左侧面板固定宽度250，右侧固定320
-    const double leftPanelWidth = 250.0;
-    const double rightPanelWidth = 320.0;
 
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyS, control: true): () {
           provider.saveCurrentChapter();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('💾 已保存当前章节', style: TextStyle(fontWeight: FontWeight.bold)), behavior: SnackBarBehavior.floating, backgroundColor: Theme.of(context).colorScheme.primary, duration: const Duration(seconds: 1)));
         },
         const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
           setState(() => _showSearchPanel = !_showSearchPanel);
@@ -72,170 +91,190 @@ class _DesktopWritingWorkspaceState extends State<_DesktopWritingWorkspace> {
           backgroundColor: currentTheme.backgroundColor,
           body: Stack(
             children: [
-              // ==================== 底层 1：核心面板层 ====================
+              // ── 三栏布局 ──
               Row(
                 children: [
-                  // 左侧目录面板
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOutCubic,
-                    width: _showLeftPanel ? leftPanelWidth : 0,
-                    decoration: BoxDecoration(color: isFlat ? currentTheme.backgroundColor : currentTheme.textColor.withValues(alpha: 0.02), border: isFlat ? Border(right: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.08), width: 1)) : null),
-                    child: const ClipRect(
-                      // 【核心修复】：加上 OverflowBox，强行锁定内部布局宽度，杜绝收起时的溢出报错
-                      child: OverflowBox(
-                        alignment: Alignment.topLeft,
-                        minWidth: leftPanelWidth,
-                        maxWidth: leftPanelWidth,
-                        child: DesktopChapterPanel(),
+                  // 左浮动卡片：章节目录
+                  if (_showLeftPanel)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(_cardMargin, _cardMargin, _cardMargin / 2, _cardMargin),
+                      child: _SideCard(
+                        width: _leftPanelWidth,
+                        isPaper: isPaper,
+                        currentTheme: currentTheme,
+                        child: const DesktopChapterPanel(),
                       ),
                     ),
-                  ),
 
+                  // 中央编辑器
                   Expanded(
-                    child: Stack(
-                      children: [
-                        Container(
-                          color: currentTheme.backgroundColor,
-                          child: DesktopEditorPanel(
-                            onBack: () => Navigator.pop(context),
-                          ),
-                        ),
-
-                        if (_showSearchPanel)
-                          Positioned(
-                            top: 16,
-                            right: 16,
-                            child: DesktopSearchPanel(
-                              provider: provider,
-                              onClose: () => setState(() => _showSearchPanel = false),
-                            ),
-                          ),
-                      ],
+                    child: DesktopEditorPanel(
+                      onBack: () => Navigator.pop(context),
+                      onAiTap: _onAiTap,
                     ),
                   ),
 
-                  // 右侧百宝箱面板
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOutCubic,
-                    width: _showRightPanel ? rightPanelWidth : 0,
-                    decoration: BoxDecoration(color: isFlat ? currentTheme.backgroundColor : currentTheme.textColor.withValues(alpha: 0.02), border: isFlat ? Border(left: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.08), width: 1)) : null),
-                    child: const ClipRect(
-                      // 【核心修复】：加上 OverflowBox 锁定内部宽度
-                      child: OverflowBox(
-                        alignment: Alignment.topLeft,
-                        minWidth: rightPanelWidth,
-                        maxWidth: rightPanelWidth,
-                        child: DesktopInspectorPanel(),
+                  // 右浮动卡片：百宝箱
+                  if (_showRightPanel)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(_cardMargin / 2, _cardMargin, _cardMargin, _cardMargin),
+                      child: _SideCard(
+                        width: _rightPanelWidth,
+                        isPaper: isPaper,
+                        currentTheme: currentTheme,
+                        child: DesktopInspectorPanel(
+                      initialTab: _inspectorTabIndex,
+                      tabController: _inspectorTabController,
+                      aiSelectedText: _aiSelectedText,
+                    ),
                       ),
                     ),
-                  ),
                 ],
               ),
 
-              // ==================== 表层 2：Z轴悬浮的物理边缘把手 ====================
-
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOutCubic,
-                left: _showLeftPanel ? leftPanelWidth - 7 : 0,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: _EdgeCollapseButton(
-                    isLeft: true,
-                    isExpanded: _showLeftPanel,
-                    onTap: () => setState(() => _showLeftPanel = !_showLeftPanel),
+              // 面板切换按钮（悬浮在编辑器边缘）
+              Positioned(
+                left: _showLeftPanel ? _leftPanelWidth + _cardMargin * 1.5 : 0,
+                top: 0, bottom: 0,
+                child: GestureDetector(
+                  onTap: () => setState(() => _showLeftPanel = !_showLeftPanel),
+                  child: Container(
+                    width: 20,
+                    color: Colors.transparent,
+                    child: Center(
+                      child: Container(
+                        width: 16, height: 48,
+                        decoration: BoxDecoration(
+                          color: currentTheme.textColor.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.horizontal(
+                            left: _showLeftPanel ? Radius.zero : const Radius.circular(8),
+                            right: _showLeftPanel ? const Radius.circular(8) : Radius.zero,
+                          ),
+                        ),
+                        child: Icon(
+                          _showLeftPanel ? CupertinoIcons.chevron_left : CupertinoIcons.chevron_right,
+                          size: 12, color: currentTheme.textColor.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
 
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOutCubic,
-                right: _showRightPanel ? rightPanelWidth - 7 : 0,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: _EdgeCollapseButton(
-                    isLeft: false,
-                    isExpanded: _showRightPanel,
-                    onTap: () => setState(() => _showRightPanel = !_showRightPanel),
+              Positioned(
+                right: _showRightPanel ? _rightPanelWidth + _cardMargin * 1.5 : 0,
+                top: 0, bottom: 0,
+                child: GestureDetector(
+                  onTap: () => setState(() => _showRightPanel = !_showRightPanel),
+                  child: Container(
+                    width: 20,
+                    color: Colors.transparent,
+                    child: Center(
+                      child: Container(
+                        width: 16, height: 48,
+                        decoration: BoxDecoration(
+                          color: currentTheme.textColor.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.horizontal(
+                            left: _showRightPanel ? const Radius.circular(8) : Radius.zero,
+                            right: _showRightPanel ? Radius.zero : const Radius.circular(8),
+                          ),
+                        ),
+                        child: Icon(
+                          _showRightPanel ? CupertinoIcons.chevron_right : CupertinoIcons.chevron_left,
+                          size: 12, color: currentTheme.textColor.withValues(alpha: 0.25),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
 
-              // 全局任务呼吸灯
-              const DesktopAiTaskIndicator(),
+              // ── 搜索面板 ──
+              if (_showSearchPanel)
+                Positioned(
+                  top: 48, right: _cardMargin + (_showRightPanel ? _rightPanelWidth + 20 : 8),
+                  child: DesktopSearchPanel(
+                    provider: provider,
+                    onClose: () => setState(() => _showSearchPanel = false),
+                  ),
+                ),
+
+              // ── 底部状态栏 ──
+              Positioned(
+                bottom: 0, left: 0, right: 0,
+                child: _buildStatusBar(currentTheme, provider, userProvider),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildStatusBar(WritingTheme currentTheme, WritingProvider provider, UserProvider userProvider) {
+    final mutedColor = currentTheme.textColor.withValues(alpha: 0.45);
+    return Container(
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Text('第 ${(provider.currentChapter?.orderIndex ?? -1) + 1} 章', style: TextStyle(fontSize: 11, color: mutedColor)),
+          const SizedBox(width: 12),
+          Text('${provider.currentChapter?.wordCount ?? 0} 字', style: TextStyle(fontSize: 11, color: mutedColor)),
+          const SizedBox(width: 12),
+          Text('行高 ${userProvider.lineHeight.toStringAsFixed(1)}', style: TextStyle(fontSize: 11, color: mutedColor)),
+          const Spacer(),
+          Text('Ctrl+S 保存  ·  Ctrl+F 搜索', style: TextStyle(fontSize: 10, color: currentTheme.textColor.withValues(alpha: 0.15), letterSpacing: 1)),
+        ],
+      ),
+    );
+  }
 }
 
-class _EdgeCollapseButton extends StatefulWidget {
-  final bool isLeft;
-  final bool isExpanded;
-  final VoidCallback onTap;
+// ═══════════════════════════════════════════
+// 悬浮侧边卡片容器
+// ═══════════════════════════════════════════
 
-  const _EdgeCollapseButton({
-    required this.isLeft,
-    required this.isExpanded,
-    required this.onTap,
+class _SideCard extends StatelessWidget {
+  final double width;
+  final bool isPaper;
+  final WritingTheme currentTheme;
+  final Widget child;
+
+  const _SideCard({
+    required this.width,
+    required this.isPaper,
+    required this.currentTheme,
+    required this.child,
   });
 
   @override
-  State<_EdgeCollapseButton> createState() => _EdgeCollapseButtonState();
-}
-
-class _EdgeCollapseButtonState extends State<_EdgeCollapseButton> {
-  bool _isHovered = false;
-
-  @override
   Widget build(BuildContext context) {
-    final theme = context.watch<UserProvider>().currentTheme;
-    final primary = Theme.of(context).colorScheme.primary;
+    final isDark = currentTheme.backgroundColor.computeLuminance() < 0.5;
+    final t = currentTheme.textColor;
 
-    IconData icon;
-    if (widget.isLeft) {
-      icon = widget.isExpanded ? CupertinoIcons.chevron_left : CupertinoIcons.chevron_right;
-    } else {
-      icon = widget.isExpanded ? CupertinoIcons.chevron_right : CupertinoIcons.chevron_left;
-    }
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          width: _isHovered ? 18.0 : 12.0,
-          height: _isHovered ? 56.0 : 44.0,
-          decoration: BoxDecoration(
-            color: _isHovered ? primary : theme.textColor.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12.0),
-            border: Border.all(color: _isHovered ? primary : theme.textColor.withValues(alpha: 0.1), width: 1),
-            boxShadow: _isHovered ? [BoxShadow(color: primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))] : [],
-          ),
-          child: Center(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                icon,
-                key: ValueKey(icon),
-                size: 10,
-                color: _isHovered ? Colors.white : theme.textColor.withValues(alpha: 0.4),
-              ),
-            ),
-          ),
+    return SizedBox(
+      width: width,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isPaper
+              ? currentTheme.backgroundColor
+              : currentTheme.backgroundColor.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: t.withValues(alpha: 0.06)),
+          boxShadow: isPaper
+              ? [BoxShadow(color: t.withValues(alpha: isDark ? 0.18 : 0.06), blurRadius: 16, offset: const Offset(0, 4))]
+              : [
+                  BoxShadow(color: t.withValues(alpha: isDark ? 0.4 : 0.08), blurRadius: 24, offset: const Offset(0, 8)),
+                  BoxShadow(color: t.withValues(alpha: isDark ? 0.2 : 0.04), blurRadius: 6, offset: const Offset(0, 2)),
+                ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: child,
         ),
       ),
     );
   }
 }
+
