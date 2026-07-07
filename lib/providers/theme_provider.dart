@@ -291,19 +291,19 @@ class ThemeProvider extends ChangeNotifier {
   ThemeData _buildSoftUiTheme(Brightness b) {
     final isLight = b == Brightness.light;
     // 参考图同款冷灰白背景：比纯白柔和、比中灰明亮
-    final bg     = isLight ? const Color(0xFFEDF0F4) : const Color(0xFF1C1C1E);
+    final bg     = isLight ? const Color(0xFFEDF0F4) : const Color(0xFF161618);
     // 卡片表面略亮于背景，让阴影只负责"轻抬"效果
-    final surf   = isLight ? const Color(0xFFF5F7FA) : const Color(0xFF252527);
-    final surfHi = isLight ? const Color(0xFFFFFFFF) : const Color(0xFF2E2E30);
-    final onBg   = isLight ? const Color(0xFF4A5568) : const Color(0xFFE5E5E7);
+    final surf   = isLight ? const Color(0xFFF5F7FA) : const Color(0xFF202023);
+    final surfHi = isLight ? const Color(0xFFFFFFFF) : const Color(0xFF2A2A2E);
+    final onBg   = isLight ? const Color(0xFF4A5568) : const Color(0xFFE8E8EA);
     // 柔和模式仍要读取用户设置的主题色作为 primary；深色模式用浅灰
-    final primary = isLight ? _seedColor : const Color(0xFFAEAEB2);
+    final primary = isLight ? _seedColor : const Color(0xFFC2C9D6);
     final onPrimary = _contrastColor(primary);
-    final outline = isLight ? const Color(0xFFDDE2E9) : const Color(0xFF48484A);
+    final outline = isLight ? const Color(0xFFDDE2E9) : const Color(0x1FFFFFFF);
 
     // Neumorphic 阴影：参考图同款"冷灰蓝柔影"
     // 特征：高 blur/offset 比（约 4:1），低饱和度冷灰，肉眼可见但不抢眼
-    final highlight = isLight ? const Color(0xFFFFFFFF) : const Color(0xFF48484A);
+    final highlight = isLight ? const Color(0xFFFFFFFF) : const Color(0xFF58585A);
     final shadow    = isLight ? const Color(0xFFC5CEDC) : const Color(0xFF0A0A0B);
 
     final cs = ColorScheme(
@@ -391,8 +391,8 @@ class ThemeProvider extends ChangeNotifier {
   static List<BoxShadow> neumorphicConvexShadow(BuildContext context, {bool isDark = false}) {
     return isDark
         ? const [
-            BoxShadow(color: Color(0xFF48484A), offset: Offset(-4, -4), blurRadius: 12),
-            BoxShadow(color: Color(0xFF0A0A0B), offset: Offset(6, 6), blurRadius: 16),
+            BoxShadow(color: Color(0xFF5E5E60), offset: Offset(-6, -6), blurRadius: 20),
+            BoxShadow(color: Color(0xFF0A0A0B), offset: Offset(8, 8), blurRadius: 24),
           ]
         : const [
             // 参考图同款：大白光高光 + 冷灰蓝柔影，blur/offset 约 4:1

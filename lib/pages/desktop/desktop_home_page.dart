@@ -59,11 +59,14 @@ class _DesktopHomePageState extends State<DesktopHomePage> {
           children: [
             Container(
               width: 240,
+              margin: isNeumorphic ? const EdgeInsets.only(left: 16, top: 16, bottom: 16) : null,
               decoration: BoxDecoration(
-                color: sidebarColor,
-                border: isPaper
-                    ? Border(right: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.06), width: 1))
-                    : null,
+                color: isNeumorphic ? Theme.of(context).colorScheme.surfaceContainerHighest : sidebarColor,
+                borderRadius: isNeumorphic ? BorderRadius.circular(20) : null,
+                boxShadow: isNeumorphic ? ThemeProvider.neumorphicConvexShadow(context) : null,
+                border: isNeumorphic
+                    ? Border.all(color: Colors.white.withValues(alpha: 0.10), width: 1)
+                    : (isPaper ? Border(right: BorderSide(color: currentTheme.textColor.withValues(alpha: 0.06), width: 1)) : null),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,10 +74,10 @@ class _DesktopHomePageState extends State<DesktopHomePage> {
                   const SizedBox(height: 40),
                   const Center(child: DesktopSidebarAvatar()),
                   const SizedBox(height: 32),
-                  _SidebarItem(icon: CupertinoIcons.book, label: '我的作品', isSelected: _selectedIndex == 0, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, onTap: () => setState(() => _selectedIndex = 0)),
-                  _SidebarItem(icon: CupertinoIcons.lightbulb, label: '灵感碎片', isSelected: _selectedIndex == 1, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, onTap: () => setState(() => _selectedIndex = 1)),
-                  _SidebarItem(icon: CupertinoIcons.chart_bar_alt_fill, label: '码字统计', isSelected: _selectedIndex == 2, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, onTap: () => setState(() => _selectedIndex = 2)),
-                  _SidebarItem(icon: CupertinoIcons.trash, label: '回收站', isSelected: _selectedIndex == 3, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, onTap: () => setState(() => _selectedIndex = 3)),
+                  _SidebarItem(icon: CupertinoIcons.book, label: '我的作品', isSelected: _selectedIndex == 0, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, isNeumorphic: isNeumorphic, onTap: () => setState(() => _selectedIndex = 0)),
+                  _SidebarItem(icon: CupertinoIcons.lightbulb, label: '灵感碎片', isSelected: _selectedIndex == 1, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, isNeumorphic: isNeumorphic, onTap: () => setState(() => _selectedIndex = 1)),
+                  _SidebarItem(icon: CupertinoIcons.chart_bar_alt_fill, label: '码字统计', isSelected: _selectedIndex == 2, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, isNeumorphic: isNeumorphic, onTap: () => setState(() => _selectedIndex = 2)),
+                  _SidebarItem(icon: CupertinoIcons.trash, label: '回收站', isSelected: _selectedIndex == 3, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, isNeumorphic: isNeumorphic, onTap: () => setState(() => _selectedIndex = 3)),
 
                   const Spacer(),
 
@@ -85,6 +88,7 @@ class _DesktopHomePageState extends State<DesktopHomePage> {
                     isPaper: isPaper,
                     currentTheme: currentTheme,
                     primaryColor: primaryColor,
+                    isNeumorphic: isNeumorphic,
                     onTap: () {
                       showDialog(
                         context: context,
@@ -96,7 +100,7 @@ class _DesktopHomePageState extends State<DesktopHomePage> {
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24),
-                    child: _SidebarItem(icon: CupertinoIcons.settings, label: '全局设置', isSelected: _selectedIndex == 4, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, onTap: () => setState(() => _selectedIndex = 4)),
+                    child: _SidebarItem(icon: CupertinoIcons.settings, label: '全局设置', isSelected: _selectedIndex == 4, isPaper: isPaper, currentTheme: currentTheme, primaryColor: primaryColor, isNeumorphic: isNeumorphic, onTap: () => setState(() => _selectedIndex = 4)),
                   ),
                 ],
               ),
@@ -117,6 +121,7 @@ class _SidebarItem extends StatefulWidget {
   final String label;
   final bool isSelected;
   final bool isPaper;
+  final bool isNeumorphic;
   final WritingTheme currentTheme;
   final Color primaryColor;
   final VoidCallback onTap;
@@ -126,6 +131,7 @@ class _SidebarItem extends StatefulWidget {
     required this.label,
     required this.isSelected,
     required this.isPaper,
+    required this.isNeumorphic,
     required this.currentTheme,
     required this.primaryColor,
     required this.onTap,
@@ -148,19 +154,27 @@ class _SidebarItemState extends State<_SidebarItem> {
       safeActiveColor = Color.lerp(safeActiveColor, Colors.black, 0.3)!;
     }
 
-    final iconColor = widget.isSelected ? safeActiveColor : inactiveColor;
-    final textColor = widget.isSelected ? safeActiveColor : inactiveColor;
+    final activeColor = widget.isNeumorphic ? Theme.of(context).colorScheme.primary : safeActiveColor;
+    final iconColor = widget.isSelected ? activeColor : inactiveColor;
+    final textColor = widget.isSelected ? activeColor : inactiveColor;
 
     Color backgroundColor = Colors.transparent;
     List<BoxShadow>? capsuleShadow;
+    Border? capsuleBorder;
 
     if (widget.isSelected) {
-      backgroundColor = widget.isPaper
-          ? (isDark ? const Color(0xFF2A2A2A) : Colors.white)
-          : safeActiveColor.withValues(alpha: 0.12);
-
-      if (widget.isPaper && !isDark) {
-        capsuleShadow = [BoxShadow(color: widget.primaryColor.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, 4))];
+      if (widget.isNeumorphic) {
+        // 新拟态选中：用比侧栏更深的表面 + 亮边框，形成"按入面板"凹陷感（双信号）
+        backgroundColor = Theme.of(context).colorScheme.surfaceContainer;
+        capsuleShadow = ThemeProvider.neumorphicConcaveShadow(context, isDark: isDark);
+        capsuleBorder = Border.all(color: Colors.white.withValues(alpha: 0.07), width: 1);
+      } else if (widget.isPaper) {
+        backgroundColor = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+        if (!isDark) {
+          capsuleShadow = [BoxShadow(color: widget.primaryColor.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, 4))];
+        }
+      } else {
+        backgroundColor = safeActiveColor.withValues(alpha: 0.12);
       }
     } else if (_isHovered) {
       backgroundColor = widget.currentTheme.textColor.withValues(alpha: 0.04);
@@ -183,6 +197,7 @@ class _SidebarItemState extends State<_SidebarItem> {
               color: backgroundColor,
               borderRadius: BorderRadius.circular(8.0),
               boxShadow: capsuleShadow,
+              border: capsuleBorder,
             ),
             child: Row(
               children: [

@@ -38,6 +38,67 @@ class _DesktopSidebarAvatarState extends State<DesktopSidebarAvatar> {
     } catch (e) { debugPrint('更新头像失败: $e'); }
   }
 
+  Widget _buildEditNicknameButton(BuildContext context, UserProvider userProvider, bool isPaper, Color dominant, dynamic currentTheme) {
+    bool hovered = false;
+    return StatefulBuilder(
+      builder: (ctx, setStateBtn) => MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setStateBtn(() => hovered = true),
+        onExit: (_) => setStateBtn(() => hovered = false),
+        child: GestureDetector(
+          onTap: () => _showEditNicknameDialog(userProvider, isPaper),
+          child: AnimatedScale(
+            scale: hovered ? 1.12 : 1.0,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutBack,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: hovered
+                    ? dominant.withValues(alpha: isPaper ? 0.18 : 0.25)
+                    : dominant.withValues(alpha: isPaper ? 0.06 : 0.12),
+                border: Border.all(color: dominant.withValues(alpha: isPaper ? 0.25 : 0.3)),
+              ),
+              child: Icon(CupertinoIcons.pencil, size: 14, color: isPaper ? currentTheme.textColor : dominant),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditNicknameDialog(UserProvider user, bool isPaper) {
+    final controller = TextEditingController(text: user.nickname);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0)),
+        title: const Text('修改昵称'),
+        content: TextField(
+          controller: controller,
+          maxLength: 12,
+          decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 12.0))),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          FilledButton(
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPaper ? 4.0 : 20.0))),
+            onPressed: () {
+              final text = controller.text.trim();
+              if (text.isNotEmpty) {
+                user.updateNickname(text);
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
@@ -92,7 +153,15 @@ class _DesktopSidebarAvatarState extends State<DesktopSidebarAvatar> {
           ),
         ),
         const SizedBox(height: 16),
-        Text(nickname, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: currentTheme.textColor, letterSpacing: 1.0)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(nickname, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: currentTheme.textColor, letterSpacing: 1.0)),
+            const SizedBox(width: 6),
+            _buildEditNicknameButton(context, userProvider, isPaper, avatarDominantColor, currentTheme),
+          ],
+        ),
         const SizedBox(height: 8),
 
         // 【核心新增】：左侧边栏专属动态徽章
